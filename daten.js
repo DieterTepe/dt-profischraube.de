@@ -186,6 +186,67 @@
         F_Kerf: 15000, F_A: 1000, F_Qmax: 2500, muT: 0.20, qF: 1,
         rz: 'Rz10-40', seats: 2, interfaces: 1
       }
+    },
+    'axial_wechsel_m12': {
+      label: 'Wechsellast M12 10.9 (Dauerfestigkeit, F_Au < 0)',
+      quelle: 'illustratives Testbeispiel (nicht normvalidiert)',
+      illustrativ: true,
+      input: {
+        size: 'M12', strengthClass: '10.9', frictionClass: 'B',
+        tightening: 'drehmomentgesteuert', connection: 'DSV', n: 0.5,
+        lShank: 18, lThreadFree: 12,
+        l_K: 30, d_w: 18, d_h: 13.5, D_A: 50, E_P: 210000, p_G: 700,
+        F_Kerf: 8000, F_Ao: 8000, F_Au: -4000, rz: 'Rz10-40', seats: 2, interfaces: 1
+      }
+    },
+    'kombiniert_m16': {
+      label: 'Kombiniert M16 10.9 (axial + Querkraft)',
+      quelle: 'illustratives Testbeispiel (nicht normvalidiert)',
+      illustrativ: true,
+      input: {
+        size: 'M16', strengthClass: '10.9', frictionClass: 'B',
+        tightening: 'drehmomentgesteuert', connection: 'DSV', n: 0.5,
+        lShank: 28, lThreadFree: 12,
+        l_K: 40, d_w: 24, d_h: 17.5, D_A: 60, E_P: 210000, p_G: 700,
+        F_Kerf: 24000, F_A: 12000, F_Qmax: 4000, muT: 0.20, qF: 1,
+        rz: 'Rz10-40', seats: 2, interfaces: 1
+      }
+    },
+    'aluminium_m10': {
+      label: 'Aluminium-Bauteile M10 8.8 (mit Flachscheibe)',
+      quelle: 'illustratives Testbeispiel (nicht normvalidiert)',
+      illustrativ: true,
+      input: {
+        size: 'M10', strengthClass: '8.8', frictionClass: 'B',
+        tightening: 'drehmomentgesteuert', connection: 'DSV', n: 0.5,
+        lShank: 14, lThreadFree: 8,
+        l_K: 22, d_w: 18, d_h: 11, D_A: 45, E_P: 70000, p_G: 230,
+        F_Kerf: 5000, F_A: 4000, rz: 'Rz10-40', seats: 2, interfaces: 1
+      }
+    },
+    'flansch_m20': {
+      label: 'Flansch M20 10.9 (hohe Axiallast)',
+      quelle: 'illustratives Testbeispiel (nicht normvalidiert)',
+      illustrativ: true,
+      input: {
+        size: 'M20', strengthClass: '10.9', frictionClass: 'B',
+        tightening: 'drehmomentgesteuert', connection: 'DSV', n: 0.5,
+        lShank: 35, lThreadFree: 15,
+        l_K: 50, d_w: 30, d_h: 22, D_A: 70, E_P: 210000, p_G: 850,
+        F_Kerf: 30000, F_A: 40000, rz: 'Rz10-40', seats: 2, interfaces: 1
+      }
+    },
+    'grauguss_esv_m12': {
+      label: 'Einschraubung in Grauguss M12 10.9 (ESV, GJL)',
+      quelle: 'illustratives Testbeispiel (nicht normvalidiert)',
+      illustrativ: true,
+      input: {
+        size: 'M12', strengthClass: '10.9', frictionClass: 'A', muG: 0.10, muK: 0.10,
+        tightening: 'drehmomentgesteuert', connection: 'ESV', n: 0.5,
+        lShank: 16, lThreadFree: 10, l_M: 3.96,
+        l_K: 26, d_w: 18, d_h: 13.5, D_A: 50, E_P: 110000, p_G: 800,
+        F_Kerf: 6000, F_A: 7000, rz: 'Rz10-40', seats: 1, interfaces: 1
+      }
     }
   };
 

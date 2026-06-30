@@ -36,6 +36,7 @@
       kvCaption: 'Weitere Kennwerte', recommended: 'empfohlen', nb: 'n. b.', customOpt: '— eigene Eingabe —',
       tagWarn: 'Grenze', tagAssume: 'Annahme', tagPending: 'offen',
       sub_F: 'Fließen (Streckgrenze)', sub_D: 'Dauerhaltbarkeit', sub_P: 'Flächenpressung', sub_G: 'Gleiten/Reibschluss',
+      na_D: 'keine Wechsel-/Schwelllast (F_Ao/F_Au)', na_P: 'keine Grenzpressung p_G angegeben', na_G: 'keine Querkraft (F_Q) — kein Gleitnachweis nötig',
       thrNote: 'Ampel sind Richtwerte (grün ≥ 1,2 · gelb ≥ 1,0 · rot < 1,0). Die erforderliche Sicherheit hängt vom Anwendungsfall ab.',
       preloadOk: 'F_Mmax ≤ F_Mzul (Montagevorspannung zulässig)', preloadBad: 'F_Mmax > F_Mzul — Schraube/Klasse zu klein',
       options: 'Auswahlmöglichkeiten', close: 'Schließen', fieldsDe: 'Feldtexte derzeit nur auf Deutsch.'
@@ -53,6 +54,7 @@
       kvCaption: 'Further values', recommended: 'recommended', nb: 'n/a', customOpt: '— custom input —',
       tagWarn: 'limit', tagAssume: 'assumption', tagPending: 'open',
       sub_F: 'Yield', sub_D: 'Fatigue', sub_P: 'Surface pressure', sub_G: 'Slipping/friction grip',
+      na_D: 'no fluctuating load (F_Ao/F_Au)', na_P: 'no limit pressure p_G given', na_G: 'no transverse force (F_Q) — no slip check needed',
       thrNote: 'Indicator colours are guide values (green ≥ 1.2 · amber ≥ 1.0 · red < 1.0). Required safety depends on the application.',
       preloadOk: 'F_Mmax ≤ F_Mzul (assembly preload admissible)', preloadBad: 'F_Mmax > F_Mzul — bolt/class too small',
       options: 'Options', close: 'Close', fieldsDe: 'Field texts are German for now.'
@@ -70,6 +72,7 @@
       kvCaption: 'Outros valores', recommended: 'recomendado', nb: 'n/d', customOpt: '— entrada própria —',
       tagWarn: 'limite', tagAssume: 'suposição', tagPending: 'pendente',
       sub_F: 'Escoamento', sub_D: 'Fadiga', sub_P: 'Pressão superficial', sub_G: 'Escorregamento/atrito',
+      na_D: 'sem carga alternada (F_Ao/F_Au)', na_P: 'sem pressão limite p_G', na_G: 'sem força transversal (F_Q) — sem verificação de escorregamento',
       thrNote: 'As cores são valores indicativos (verde ≥ 1,2 · amarelo ≥ 1,0 · vermelho < 1,0). A segurança exigida depende da aplicação.',
       preloadOk: 'F_Mmax ≤ F_Mzul (pré-tensão de montagem admissível)', preloadBad: 'F_Mmax > F_Mzul — parafuso/classe pequenos demais',
       options: 'Opções', close: 'Fechar', fieldsDe: 'Os textos dos campos estão em alemão por agora.'
@@ -217,6 +220,7 @@
     var inp = {};
     Object.keys(FIELDS).forEach(function (key) {
       var f = FIELDS[key], elx = fieldEls[key]; if (!elx) return;
+      if (elx.disabled) return;
       var v = elx.value;
       if (v === '' || v == null) return;
       inp[key] = (f.type === 'number') ? Number(v) : v;
@@ -241,11 +245,36 @@
       m.textContent = it.text; m.className = 'field-msg ' + (isErr ? 'error' : 'warning');
     });
   }
+  function updateDependencies() {
+    Object.keys(FIELDS).forEach(function (key) {
+      var dep = FIELDS[key].dependsOn; if (!dep) return;
+      var drv = fieldEls[dep], row = fieldRows[key], ctrl = fieldEls[key];
+      if (!drv || !row || !ctrl) return;
+      var dv = drv.value;
+      var active = (dv !== '' && dv != null && Number(dv) !== 0);
+      row.classList.toggle('is-disabled', !active);
+      ctrl.disabled = !active;
+    });
+  }
+  function clearNeedsInput() {
+    Object.keys(fieldRows).forEach(function (k) { var b = fieldRows[k].querySelector('.help-btn'); if (b) b.classList.remove('needs-input'); });
+  }
+  function markNeedsInput(errors) {
+    var codes = { REQUIRED: 1, FRICTION_MISSING: 1, TIGHTENING_MISSING: 1, NOT_A_NUMBER: 1 };
+    errors.forEach(function (e) {
+      if (!codes[e.code]) return;
+      var r = fieldRows[e.field]; if (!r) return;
+      var b = r.querySelector('.help-btn'); if (b) b.classList.add('needs-input');
+    });
+  }
   function liveValidate() {
+    updateDependencies();
     var vr = VALID.validateInput(collectInputs());
     clearFieldStates();
+    clearNeedsInput();
     applyMessages(vr.errors);
     applyMessages(vr.warnings);
+    markNeedsInput(vr.errors);
     return vr;
   }
 
@@ -275,12 +304,13 @@
 
   function safetyClass(s) { if (s == null || !isFinite(s)) return 'na'; if (s >= 1.2) return 'ok'; if (s >= 1.0) return 'warn'; return 'bad'; }
 
-  function safetyCard(symbol, subKey, val) {
+  function safetyCard(symbol, subKey, val, reasonKey) {
     var cls = safetyClass(val);
     var c = el('div', 'safety-card ' + cls);
     var name = el('div', 'sc-name'); name.appendChild(el('b', null, symbol)); name.appendChild(el('span', 'sc-sub', t(subKey)));
     c.appendChild(name);
     c.appendChild(el('div', 'sc-val', cls === 'na' ? t('nb') : fmt(val, 2)));
+    if (cls === 'na' && reasonKey) c.appendChild(el('div', 'sc-reason', t(reasonKey)));
     c.appendChild(el('div', 'sc-dot'));
     return c;
   }
@@ -292,9 +322,9 @@
     // Sicherheiten
     var grid = el('div', 'safety-grid');
     grid.appendChild(safetyCard('S_F', 'sub_F', R.S_F));
-    grid.appendChild(safetyCard('S_D', 'sub_D', R.fatigue ? R.fatigue.S_D : null));
-    grid.appendChild(safetyCard('S_P', 'sub_P', R.pressure ? R.pressure.S_P : null));
-    grid.appendChild(safetyCard('S_G', 'sub_G', R.slip ? R.slip.S_G : null));
+    grid.appendChild(safetyCard('S_D', 'sub_D', R.fatigue ? R.fatigue.S_D : null, 'na_D'));
+    grid.appendChild(safetyCard('S_P', 'sub_P', R.pressure ? R.pressure.S_P : null, 'na_P'));
+    grid.appendChild(safetyCard('S_G', 'sub_G', R.slip ? R.slip.S_G : null, 'na_G'));
     host.appendChild(grid);
 
     var thr = el('div', 'note-line assume'); thr.style.marginTop = '10px';
@@ -370,9 +400,9 @@
       else fieldEls[k].value = '';
     });
     $('presetSel').value = '';
-    clearFieldStates();
     $('resultHost').innerHTML = ''; $('resultHost').appendChild(banner('idle', t('resultIdle')));
     setSteps(false); lastResult = null;
+    liveValidate();
   }
 
   /* ----------------------------------------------------------- Sprache/Theme */

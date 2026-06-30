@@ -196,7 +196,7 @@
     },
     F_Au: {
       label: 'Axiallast Unterwert F_Au', group: 'Belastung', type: 'number', unit: 'N',
-      max: 1e8, diagram: 'axiallast',
+      max: 1e8, diagram: 'axiallast', dependsOn: 'F_Ao',
       help: 'Kleinster Wert der schwankenden Axialkraft. 0 bei reiner Schwellast. Negative Werte (Wechsellast) sind moeglich, muessen aber kleiner als F_Ao sein.'
     },
     F_Qmax: {
@@ -206,12 +206,12 @@
     },
     muT: {
       label: 'Reibwert Trennfuge mu_T', group: 'Belastung', type: 'number', unit: '-',
-      min: 0.01, max: 0.8, warnMin: 0.05, warnMax: 0.30, decimals: 3, diagram: 'querkraft',
+      min: 0.01, max: 0.8, warnMin: 0.05, warnMax: 0.30, decimals: 3, diagram: 'querkraft', dependsOn: 'F_Qmax',
       help: 'Haftreibungszahl zwischen den verspannten Teilen (nur fuer Querkraft/Gleitnachweis). Trocken Stahl/Stahl ca. 0,1-0,2; geoelt weniger. Konservativ klein waehlen.'
     },
     qF: {
       label: 'Zahl der Trennfugen q_F', group: 'Belastung', type: 'number', unit: '-',
-      min: 1, max: 20, warnMax: 10, decimals: 0, advanced: true, diagram: null,
+      min: 1, max: 20, warnMax: 10, decimals: 0, advanced: true, diagram: null, dependsOn: 'F_Qmax',
       help: 'Anzahl der kraftuebertragenden Trennfugen fuer die Querkraft. Bei zwei verspannten Teilen meist 1.'
     },
     n: {

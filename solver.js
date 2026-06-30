@@ -426,14 +426,17 @@
       notes.assumptions.push('alpha_A = oberer Bereichswert von "' + inp.tightening + '" (' + alphaA + ')');
     }
 
-    var deltaS = boltCompliance({ d: g.d, d3: g.d3, lShank: inp.lShank, lThreadFree: inp.lThreadFree, E_S: (inp.E_S || DATA.E_SCREW), E_M: inp.E_M, l_SK: inp.l_SK, l_G: inp.l_G, l_M: inp.l_M }).deltaS;
+    var conn = inp.connection || 'DSV';
+    if (inp.connection == null) notes.assumptions.push('Verbindungsart = DSV angenommen');
+    // E_M (Ersatzteil Mutter/Einschraubteil): DSV -> Mutter aus Stahl (E_S);
+    // ESV -> eingeschraubtes Teil = verspanntes Material (E_P).
+    var E_M_eff = (inp.E_M != null) ? inp.E_M : (conn === 'ESV' ? inp.E_P : (inp.E_S || DATA.E_SCREW));
+    var deltaS = boltCompliance({ d: g.d, d3: g.d3, lShank: inp.lShank, lThreadFree: inp.lThreadFree, E_S: (inp.E_S || DATA.E_SCREW), E_M: E_M_eff, l_SK: inp.l_SK, l_G: inp.l_G, l_M: inp.l_M }).deltaS;
 
     var deltaP, deltaPmodel, tanPhi = null, DAGr = null;
     if (inp.deltaP != null) {
       deltaP = inp.deltaP; deltaPmodel = 'override';
     } else {
-      var conn = inp.connection || 'DSV';
-      if (inp.connection == null) notes.assumptions.push('Verbindungsart = DSV angenommen');
       var pc = plateCompliance({ E_P: inp.E_P, d_w: inp.d_w, d_h: inp.d_h, D_A: inp.D_A, l_K: inp.l_K, connection: conn });
       deltaP = pc.deltaP; deltaPmodel = pc.model; tanPhi = pc.tanPhi; DAGr = pc.DAGr;
       if (pc.model === 'cone+sleeve') notes.pending.push('delta_P Kegel+Huelse (mittlerer Fall) — Struktur nach VDI, separat validieren');
