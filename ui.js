@@ -6,8 +6,8 @@
  * - Live-Pruefung ueber validateInput (Fehler blockieren, Warnungen weisen hin)
  * - "Beispiel laden" aus listPresets, Berechnen ueber computeJoint
  * - Bedien-Oberflaeche DE/EN/PT; Hell/Dunkel; alles offline (globale Objekte)
- * Feldbeschriftungen/Hilfe sind aktuell deutsch (aus dem Schema) — die
- * Mehrsprachigkeit der Feldtexte ist der naechste i18n-Schritt.
+ * Feldbeschriftungen, Hilfe, Auswahl-Hinweise und Pruefmeldungen sind
+ * dreisprachig (DE/EN/PT); ein Sprachwechsel baut das Formular neu auf.
  * ========================================================================== */
 (function () {
   'use strict';
@@ -39,7 +39,7 @@
       na_D: 'keine Wechsel-/Schwelllast (F_Ao/F_Au)', na_P: 'keine Grenzpressung p_G angegeben', na_G: 'keine Querkraft (F_Q) — kein Gleitnachweis nötig',
       thrNote: 'Ampel sind Richtwerte (grün ≥ 1,2 · gelb ≥ 1,0 · rot < 1,0). Die erforderliche Sicherheit hängt vom Anwendungsfall ab.',
       preloadOk: 'F_Mmax ≤ F_Mzul (Montagevorspannung zulässig)', preloadBad: 'F_Mmax > F_Mzul — Schraube/Klasse zu klein',
-      options: 'Auswahlmöglichkeiten', close: 'Schließen', fieldsDe: 'Feldtexte derzeit nur auf Deutsch.'
+      options: 'Auswahlmöglichkeiten', allowed: 'Zulässig', usual: 'Üblich', close: 'Schließen', fieldsDe: 'Feldtexte derzeit nur auf Deutsch.'
     },
     en: {
       tagline: 'Bolted joint to VDI 2230 Part 1', loadExample: 'Load example',
@@ -57,7 +57,7 @@
       na_D: 'no fluctuating load (F_Ao/F_Au)', na_P: 'no limit pressure p_G given', na_G: 'no transverse force (F_Q) — no slip check needed',
       thrNote: 'Indicator colours are guide values (green ≥ 1.2 · amber ≥ 1.0 · red < 1.0). Required safety depends on the application.',
       preloadOk: 'F_Mmax ≤ F_Mzul (assembly preload admissible)', preloadBad: 'F_Mmax > F_Mzul — bolt/class too small',
-      options: 'Options', close: 'Close', fieldsDe: 'Field texts are German for now.'
+      options: 'Options', allowed: 'Allowed', usual: 'Typical', close: 'Close', fieldsDe: 'Field texts are German for now.'
     },
     pt: {
       tagline: 'União aparafusada conforme VDI 2230 Parte 1', loadExample: 'Carregar exemplo',
@@ -75,7 +75,7 @@
       na_D: 'sem carga alternada (F_Ao/F_Au)', na_P: 'sem pressão limite p_G', na_G: 'sem força transversal (F_Q) — sem verificação de escorregamento',
       thrNote: 'As cores são valores indicativos (verde ≥ 1,2 · amarelo ≥ 1,0 · vermelho < 1,0). A segurança exigida depende da aplicação.',
       preloadOk: 'F_Mmax ≤ F_Mzul (pré-tensão de montagem admissível)', preloadBad: 'F_Mmax > F_Mzul — parafuso/classe pequenos demais',
-      options: 'Opções', close: 'Fechar', fieldsDe: 'Os textos dos campos estão em alemão por agora.'
+      options: 'Opções', allowed: 'Permitido', usual: 'Habitual', close: 'Fechar', fieldsDe: 'Os textos dos campos estão em alemão por agora.'
     }
   };
   var GROUP_ORDER = ['Schraube', 'Anziehen', 'Geometrie', 'Belastung', 'Setzen'];
@@ -100,6 +100,8 @@
   /* ------------------------------------------------------------- DOM-Helfer */
   function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
   function $(id) { return document.getElementById(id); }
+  function L(f) { return (f && f.label && (f.label[lang] || f.label.de)) || ''; }
+  function H(key) { var f = FIELDS[key]; return (f && f.help && (f.help[lang] || f.help.de)) || ''; }
 
   var fieldEls = {};   // key -> input/select Element
   var fieldRows = {};  // key -> .field Element
@@ -131,20 +133,22 @@
     var row = el('div', 'field' + (f.advanced ? ' adv' : ''));
     fieldRows[key] = row;
 
-    var lab = el('label', 'field-label');
+    var head = el('div', 'field-label');
+    var lab = el('label');
     lab.setAttribute('for', 'f_' + key);
-    lab.appendChild(document.createTextNode(f.label + ' '));
+    lab.appendChild(document.createTextNode(L(f) + ' '));
     if (f.unit) { var u = el('span', 'unit', '[' + f.unit + ']'); lab.appendChild(u); }
+    head.appendChild(lab);
     var hb = el('button', 'help-btn', 'i'); hb.type = 'button';
-    hb.setAttribute('aria-label', 'Hilfe: ' + f.label);
-    hb.addEventListener('click', function (ev) { ev.preventDefault(); openHelp(key); });
-    lab.appendChild(hb);
-    row.appendChild(lab);
+    hb.setAttribute('aria-label', (lang === 'de' ? 'Hilfe: ' : 'Help: ') + L(f));
+    hb.addEventListener('click', function (ev) { ev.preventDefault(); ev.stopPropagation(); openHelp(key); });
+    head.appendChild(hb);
+    row.appendChild(head);
 
     var ctrl;
     if (f.type === 'enum') {
       ctrl = el('select'); ctrl.id = 'f_' + key;
-      var opts = VALID.fieldOptions(f.enumOf);
+      var opts = VALID.fieldOptions(f.enumOf, lang);
       if (!f.required) { ctrl.appendChild(new Option('—', '')); }
       opts.forEach(function (o) {
         var label = o.value + (o.recommended ? ' · ' + t('recommended') : '');
@@ -168,7 +172,7 @@
 
     row.appendChild(el('div', 'field-msg')); // Platz fuer Meldung
     if (f.type === 'enum') {
-      var rec = VALID.fieldOptions(f.enumOf).filter(function (o) { return o.recommended; })[0];
+      var rec = VALID.fieldOptions(f.enumOf, lang).filter(function (o) { return o.recommended; })[0];
       if (rec) { var r = el('div', 'field-rec', '★ ' + t('recommended') + ': ' + rec.value); row.appendChild(r); }
     }
     return row;
@@ -177,21 +181,21 @@
   /* ----------------------------------------------------------- Hilfe-Overlay */
   function openHelp(key) {
     var f = FIELDS[key];
-    $('modalTitle').textContent = f.label + (f.unit ? '  [' + f.unit + ']' : '');
+    $('modalTitle').textContent = L(f) + (f.unit ? '  [' + f.unit + ']' : '');
     var body = $('modalBody'); body.innerHTML = '';
-    body.appendChild(el('p', null, VALID.fieldHelp(key)));
+    body.appendChild(el('p', null, H(key)));
 
     var range = '';
     if (f.type === 'number') {
-      if (f.min != null || f.max != null) range += 'Zulässig: ' + (f.min != null ? '≥ ' + f.min : '') + (f.min != null && f.max != null ? '  ·  ' : '') + (f.max != null ? '≤ ' + f.max : '');
-      if (f.warnMin != null || f.warnMax != null) range += (range ? '\n' : '') + 'Üblich: ' + (f.warnMin != null ? f.warnMin : '') + (f.warnMax != null ? '…' + f.warnMax : '') + (f.unit ? ' ' + f.unit : '');
+      if (f.min != null || f.max != null) range += t('allowed') + ': ' + (f.min != null ? '≥ ' + f.min : '') + (f.min != null && f.max != null ? '  ·  ' : '') + (f.max != null ? '≤ ' + f.max : '');
+      if (f.warnMin != null || f.warnMax != null) range += (range ? '\n' : '') + t('usual') + ': ' + (f.warnMin != null ? f.warnMin : '') + (f.warnMax != null ? '…' + f.warnMax : '') + (f.unit ? ' ' + f.unit : '');
     }
     if (range) { var rd = el('div', 'modal-range'); rd.style.whiteSpace = 'pre-line'; rd.textContent = range; body.appendChild(rd); }
 
     if (f.type === 'enum') {
       body.appendChild(el('div', null, t('options'))).style.cssText = 'font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;margin:4px 0';
       var ul = el('ul', 'opt-list');
-      VALID.fieldOptions(f.enumOf).forEach(function (o) {
+      VALID.fieldOptions(f.enumOf, lang).forEach(function (o) {
         var li = el('li');
         var b = el('b', null, o.value); li.appendChild(b);
         if (o.note) li.appendChild(document.createTextNode('  ' + o.note));
@@ -211,7 +215,6 @@
     b.appendChild(el('p', null, t('tagline') + '.'));
     b.appendChild(el('p', null, t('footNote')));
     b.appendChild(el('p', null, t('thrNote')));
-    if (lang !== 'de') b.appendChild(el('p', null, t('fieldsDe')));
     $('modal').classList.add('open');
   }
 
@@ -235,6 +238,40 @@
       var m = r.querySelector('.field-msg'); if (m) { m.textContent = ''; m.className = 'field-msg'; }
     });
   }
+  /* Pruefmeldungen je Code (EN/PT); DE nutzt den ausfuehrlichen Text aus validate.js.
+   * Platzhalter: {label}=Feldname (lokalisiert), {a}/{b}=Bereich, {opts}=erlaubte Werte. */
+  var MSG = {
+    REQUIRED: { en: '{label} is required.', pt: '{label} é obrigatório.' },
+    ENUM_INVALID: { en: '{label}: invalid value. Allowed: {opts}.', pt: '{label}: valor inválido. Permitido: {opts}.' },
+    NOT_A_NUMBER: { en: '{label} must be a number.', pt: '{label} deve ser um número.' },
+    BELOW_MIN: { en: '{label} too small (allowed ≥ {a}).', pt: '{label} demasiado pequeno (permitido ≥ {a}).' },
+    ABOVE_MAX: { en: '{label} too large (allowed ≤ {b}).', pt: '{label} demasiado grande (permitido ≤ {b}).' },
+    BELOW_TYPICAL: { en: '{label} below the usual range ({a}…{b}). Please check.', pt: '{label} abaixo do intervalo habitual ({a}…{b}). Verifique.' },
+    ABOVE_TYPICAL: { en: '{label} above the usual range ({a}…{b}). Please check.', pt: '{label} acima do intervalo habitual ({a}…{b}). Verifique.' },
+    D_H_GE_D_W: { en: 'Hole d_h ≥ head bearing d_w. d_h must be smaller than d_w (usual d_h ≈ 1.05–1.15·d).', pt: 'Furo d_h ≥ apoio da cabeça d_w. d_h deve ser menor que d_w (habitual d_h ≈ 1,05–1,15·d).' },
+    DA_LE_D_H: { en: 'Outer diameter D_A ≤ hole d_h. D_A must be larger than d_h.', pt: 'Diâmetro exterior D_A ≤ furo d_h. D_A deve ser maior que d_h.' },
+    PITCH_TOO_LARGE: { en: 'Pitch P is too large for d (core diameter would be ≤ 0).', pt: 'Passo P demasiado grande para d (diâmetro do núcleo seria ≤ 0).' },
+    FAO_LT_FAU: { en: 'Upper load F_Ao is smaller than lower load F_Au. F_Ao must be ≥ F_Au.', pt: 'Carga superior F_Ao menor que carga inferior F_Au. F_Ao deve ser ≥ F_Au.' },
+    FRICTION_MISSING: { en: 'Friction missing: choose a friction class or enter μ_G.', pt: 'Atrito em falta: escolha uma classe de atrito ou indique μ_G.' },
+    TIGHTENING_MISSING: { en: 'Tightening method missing: choose a method or enter α_A.', pt: 'Método de aperto em falta: escolha um método ou indique α_A.' },
+    D_H_LT_D: { en: 'Hole d_h is smaller than the thread diameter d (usual clearance hole d_h ≈ 1.05–1.15·d).', pt: 'Furo d_h menor que o diâmetro da rosca d (furo de folga habitual d_h ≈ 1,05–1,15·d).' },
+    D_W_RATIO: { en: 'Head/thread ratio d_w/d is unusual (usual ≈ 1.4–1.8). Please check d_w.', pt: 'Relação cabeça/rosca d_w/d incomum (habitual ≈ 1,4–1,8). Verifique d_w.' },
+    CONE_BETAL_RANGE: { en: 'l_K/d_w is outside the validated range of the empirical cone formula (≈ 0.3–8); δ_P is extrapolated there.', pt: 'l_K/d_w fora do intervalo validado da fórmula empírica do cone (≈ 0,3–8); δ_P é extrapolado.' },
+    CONE_Y_RANGE: { en: 'D_A/d_w is very large; the empirical cone formula is no longer validated (guide ≤ ≈ 8); δ_P is extrapolated.', pt: 'D_A/d_w muito grande; a fórmula empírica do cone deixa de ser validada (ref. ≤ ≈ 8); δ_P é extrapolado.' },
+    STRENGTH_SCOPE: { en: 'Property class is outside the main scope of VDI 2230 (8.8 to 12.9). The checks target high-strength bolts.', pt: 'Classe de resistência fora do âmbito principal da VDI 2230 (8.8 a 12.9). As verificações destinam-se a parafusos de alta resistência.' }
+  };
+  function msgText(item) {
+    if (lang === 'de') return item.text;
+    var m = MSG[item.code]; if (!m || !m[lang]) return item.text;
+    var f = FIELDS[item.field], label = f ? (f.label[lang] || f.label.de) : item.field;
+    var r = item.range || [];
+    return m[lang]
+      .replace('{label}', label)
+      .replace('{a}', r[0] != null ? r[0] : '')
+      .replace('{b}', r[1] != null ? r[1] : '')
+      .replace('{opts}', (r || []).join(', '));
+  }
+
   function applyMessages(items) {
     items.forEach(function (it) {
       var r = fieldRows[it.field]; if (!r) return;
@@ -242,7 +279,7 @@
       if (isErr) r.classList.add('has-error'); else if (!r.classList.contains('has-error')) r.classList.add('has-warning');
       var m = r.querySelector('.field-msg'); if (!m) return;
       if (m.textContent && m.className.indexOf('error') >= 0) return; // Fehler hat Vorrang
-      m.textContent = it.text; m.className = 'field-msg ' + (isErr ? 'error' : 'warning');
+      m.textContent = msgText(it); m.className = 'field-msg ' + (isErr ? 'error' : 'warning');
     });
   }
   function updateDependencies() {
@@ -288,7 +325,7 @@
       host.innerHTML = '';
       host.appendChild(banner('bad', t('statusInvalid')));
       var ul = el('div', 'notes');
-      R.errors.forEach(function (e) { ul.appendChild(noteLine('warning', t('tagWarn'), e.text)); });
+      R.errors.forEach(function (e) { ul.appendChild(noteLine('warning', t('tagWarn'), msgText(e))); });
       host.appendChild(ul);
       setSteps(false);
       lastResult = null;
@@ -355,7 +392,7 @@
     // Hinweise: Vorspannungs-Check, Warnungen, Annahmen, Offene Punkte
     var notes = el('div', 'notes');
     notes.appendChild(noteLine(R.preloadOK ? 'assume' : 'warning', R.preloadOK ? '✓' : t('tagWarn'), R.preloadOK ? t('preloadOk') : t('preloadBad')));
-    (R.warnings || []).forEach(function (w) { notes.appendChild(noteLine('warning', t('tagWarn'), w.text)); });
+    (R.warnings || []).forEach(function (w) { notes.appendChild(noteLine('warning', t('tagWarn'), msgText(w))); });
     (R.notes && R.notes.assumptions || []).forEach(function (a) { notes.appendChild(noteLine('assume', t('tagAssume'), a)); });
     (R.notes && R.notes.pending || []).forEach(function (p) { notes.appendChild(noteLine('assume', t('tagPending'), p)); });
     host.appendChild(notes);
@@ -396,7 +433,7 @@
   function resetForm() {
     Object.keys(fieldEls).forEach(function (k) {
       var f = FIELDS[k];
-      if (f.type === 'enum') { var rec = VALID.fieldOptions(f.enumOf).filter(function (o) { return o.recommended; })[0]; fieldEls[k].value = rec ? rec.value : ''; }
+      if (f.type === 'enum') { var rec = VALID.fieldOptions(f.enumOf, lang).filter(function (o) { return o.recommended; })[0]; fieldEls[k].value = rec ? rec.value : ''; }
       else fieldEls[k].value = '';
     });
     $('presetSel').value = '';
@@ -406,15 +443,22 @@
   }
 
   /* ----------------------------------------------------------- Sprache/Theme */
+  function snapshotForm() { var s = {}; Object.keys(fieldEls).forEach(function (k) { s[k] = fieldEls[k].value; }); return s; }
+  function restoreForm(s) { Object.keys(fieldEls).forEach(function (k) { if (s[k] !== undefined && fieldEls[k]) fieldEls[k].value = s[k]; }); }
   function applyLang() {
     document.documentElement.lang = lang;
+    var hadForm = Object.keys(fieldEls).length > 0;
+    var snap = hadForm ? snapshotForm() : null;
+    if (hadForm) { buildForm(); restoreForm(snap); }   // Feldtexte/Optionen in neuer Sprache, Werte bleiben
     var nodes = document.querySelectorAll('[data-i18n]');
     for (var i = 0; i < nodes.length; i++) { var key = nodes[i].getAttribute('data-i18n'); nodes[i].textContent = t(key); }
     // Presetliste (customOpt) + Empfehlungs-Suffix neu, ohne Auswahl zu verlieren
     var cur = $('presetSel').value; fillPresetSelect(); $('presetSel').value = cur;
     var btns = document.querySelectorAll('#langSwitch .lang-btn');
     for (var j = 0; j < btns.length; j++) btns[j].classList.toggle('active', btns[j].getAttribute('data-lang') === lang);
+    updateDependencies();
     if (lastResult) renderResults(lastResult); else { var h = $('resultHost'); if (h.querySelector('.status-banner.idle')) { h.innerHTML = ''; h.appendChild(banner('idle', t('resultIdle'))); } }
+    if (hadForm) liveValidate();
   }
   function setLang(l) { lang = l; localStorage.setItem('dts-lang', l); applyLang(); }
 

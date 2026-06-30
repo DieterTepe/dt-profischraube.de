@@ -198,11 +198,13 @@ body.show-adv .field.adv { display: grid; }
 .field.is-disabled .field-label { color: var(--faint); }
 .field.is-disabled input { cursor: not-allowed; }
 .field-label { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); }
+.field-label label { display: inline-flex; align-items: center; gap: 6px; cursor: default; }
 .field-label .unit { color: var(--faint); font-size: 12px; }
 .help-btn {
-  width: 17px; height: 17px; flex: none; border-radius: 50%;
+  margin-left: auto; width: 24px; height: 24px; flex: none; border-radius: 50%;
   border: 1px solid var(--line); background: var(--surface); color: var(--muted);
-  font: 700 11px/1 var(--font-ui); cursor: pointer; display: inline-grid; place-items: center; padding: 0;
+  font: 700 12px/1 var(--font-ui); cursor: pointer; display: inline-grid; place-items: center; padding: 0;
+  touch-action: manipulation; position: relative; z-index: 2;
 }
 .help-btn:hover { border-color: var(--accent); color: var(--accent); }
 .help-btn.needs-input { border-color: var(--brass); color: var(--brass); background: var(--brass-soft); animation: needsPulse 1.9s ease-in-out infinite; }
