@@ -13,6 +13,7 @@
   'use strict';
 
   var DATA = window.DTSData, VALID = window.DTSValidate, SOLVER = window.DTSSolver;
+  var RECHENWEG = window.DTSRechenweg || null;
   if (!DATA || !VALID || !SOLVER) {
     document.getElementById('resultHost').innerHTML =
       '<div class="status-banner bad">Module nicht geladen (daten.js / validate.js / solver.js).</div>';
@@ -39,7 +40,7 @@
       na_D: 'keine Wechsel-/Schwelllast (F_Ao/F_Au)', na_P: 'keine Grenzpressung p_G angegeben', na_G: 'keine Querkraft (F_Q) — kein Gleitnachweis nötig',
       thrNote: 'Ampel sind Richtwerte (grün ≥ 1,2 · gelb ≥ 1,0 · rot < 1,0). Die erforderliche Sicherheit hängt vom Anwendungsfall ab.',
       preloadOk: 'F_Mmax ≤ F_Mzul (Montagevorspannung zulässig)', preloadBad: 'F_Mmax > F_Mzul — Schraube/Klasse zu klein',
-      options: 'Auswahlmöglichkeiten', allowed: 'Zulässig', usual: 'Üblich', close: 'Schließen', fieldsDe: 'Feldtexte derzeit nur auf Deutsch.'
+      options: 'Auswahlmöglichkeiten', allowed: 'Zulässig', usual: 'Üblich', close: 'Schließen', fieldsDe: 'Feldtexte derzeit nur auf Deutsch.', rechenwegTitle: 'Rechenweg', rwHint: 'Jeder Schritt: allgemeine Formel, eingesetzte Werte, Ergebnis.', rwVerified: 'gegen Engine geprüft'
     },
     en: {
       tagline: 'Bolted joint to VDI 2230 Part 1', loadExample: 'Load example',
@@ -57,7 +58,7 @@
       na_D: 'no fluctuating load (F_Ao/F_Au)', na_P: 'no limit pressure p_G given', na_G: 'no transverse force (F_Q) — no slip check needed',
       thrNote: 'Indicator colours are guide values (green ≥ 1.2 · amber ≥ 1.0 · red < 1.0). Required safety depends on the application.',
       preloadOk: 'F_Mmax ≤ F_Mzul (assembly preload admissible)', preloadBad: 'F_Mmax > F_Mzul — bolt/class too small',
-      options: 'Options', allowed: 'Allowed', usual: 'Typical', close: 'Close', fieldsDe: 'Field texts are German for now.'
+      options: 'Options', allowed: 'Allowed', usual: 'Typical', close: 'Close', fieldsDe: 'Field texts are German for now.', rechenwegTitle: 'Calculation path', rwHint: 'Each step: general formula, inserted values, result.', rwVerified: 'checked against engine'
     },
     pt: {
       tagline: 'União aparafusada conforme VDI 2230 Parte 1', loadExample: 'Carregar exemplo',
@@ -75,7 +76,7 @@
       na_D: 'sem carga alternada (F_Ao/F_Au)', na_P: 'sem pressão limite p_G', na_G: 'sem força transversal (F_Q) — sem verificação de escorregamento',
       thrNote: 'As cores são valores indicativos (verde ≥ 1,2 · amarelo ≥ 1,0 · vermelho < 1,0). A segurança exigida depende da aplicação.',
       preloadOk: 'F_Mmax ≤ F_Mzul (pré-tensão de montagem admissível)', preloadBad: 'F_Mmax > F_Mzul — parafuso/classe pequenos demais',
-      options: 'Opções', allowed: 'Permitido', usual: 'Habitual', close: 'Fechar', fieldsDe: 'Os textos dos campos estão em alemão por agora.'
+      options: 'Opções', allowed: 'Permitido', usual: 'Habitual', close: 'Fechar', fieldsDe: 'Os textos dos campos estão em alemão por agora.', rechenwegTitle: 'Percurso de cálculo', rwHint: 'Cada passo: fórmula geral, valores inseridos, resultado.', rwVerified: 'verificado com o motor'
     }
   };
   var GROUP_ORDER = ['Schraube', 'Anziehen', 'Geometrie', 'Belastung', 'Setzen'];
@@ -106,6 +107,7 @@
   var fieldEls = {};   // key -> input/select Element
   var fieldRows = {};  // key -> .field Element
   var lastResult = null;
+  var lastInputs = null;
 
   /* --------------------------------------------------------- Formular bauen */
   function buildForm() {
@@ -272,6 +274,31 @@
       .replace('{opts}', (r || []).join(', '));
   }
 
+  /* Engine-Hinweise (Annahmen/Offene Punkte) je Code (EN/PT); DE nutzt item.text. */
+  var NOTE = {
+    ASSUME_ALPHA_FROM_METHOD: { en: 'α_A = upper range value of "{method}" ({alphaA})', pt: 'α_A = valor superior do intervalo de "{method}" ({alphaA})' },
+    ASSUME_CONN_DSV: { en: 'Joint type assumed as DSV (through-bolt with nut).', pt: 'Tipo de união assumido como DSV (parafuso passante com porca).' },
+    ASSUME_N_DEFAULT: { en: 'Load-introduction factor n = {n} (unfavourable/safe) assumed.', pt: 'Fator de introdução de carga n = {n} (desfavorável/seguro) assumido.' },
+    ASSUME_FA_FROM_FAO: { en: 'Working force F_A = F_Ao (upper load) for the preload chain.', pt: 'Força de serviço F_A = F_Ao (carga superior) para a cadeia de pré-tensão.' },
+    ASSUME_DFVTH_ZERO: { en: 'Thermal part ΔF_Vth = 0 (no temperature influence).', pt: 'Parte térmica ΔF_Vth = 0 (sem influência da temperatura).' },
+    ASSUME_KTAU: { en: 'Residual torsion factor k_τ = {kTau} in operation.', pt: 'Fator de torção residual k_τ = {kTau} em serviço.' },
+    ASSUME_FKR_FORMULA: { en: 'Residual clamp force F_KR = F_Mmin − F_Z − ΔF_Vth − (1−Φ_en)·F_A.', pt: 'Força de aperto residual F_KR = F_Mmin − F_Z − ΔF_Vth − (1−Φ_en)·F_A.' },
+    PENDING_DP_CONE_SLEEVE: { en: 'δ_P cone+sleeve (intermediate case) — structure per VDI, validate separately.', pt: 'δ_P cone+manga (caso intermédio) — estrutura conforme VDI, validar separadamente.' },
+    PENDING_FATIGUE_SV: { en: 'Fatigue only for SV (heat-treated); SG separately (standard needed).', pt: 'Fadiga apenas para SV (temperado); SG em separado (norma necessária).' },
+    PENDING_R11: { en: 'R11 minimum engagement depth — empirical factors, standard/SR1 needed.', pt: 'R11 profundidade mínima de engate — fatores empíricos, norma/SR1 necessária.' }
+  };
+  function noteText(item) {
+    if (typeof item === 'string') return item;
+    if (lang === 'de') return item.text;
+    var tpl = NOTE[item.code] && NOTE[item.code][lang];
+    if (!tpl) return item.text;
+    return tpl
+      .replace('{method}', item.method != null ? item.method : '')
+      .replace('{alphaA}', item.alphaA != null ? item.alphaA : '')
+      .replace('{kTau}', item.kTau != null ? item.kTau : '')
+      .replace('{n}', item.n != null ? item.n : '');
+  }
+
   function applyMessages(items) {
     items.forEach(function (it) {
       var r = fieldRows[it.field]; if (!r) return;
@@ -317,7 +344,8 @@
 
   /* ------------------------------------------------------------- Berechnung */
   function compute() {
-    var R = SOLVER.computeJoint(collectInputs());
+    var inp = collectInputs();
+    var R = SOLVER.computeJoint(inp);
     var host = $('resultHost');
     clearFieldStates();
     if (R.status === 'invalid') {
@@ -328,10 +356,11 @@
       R.errors.forEach(function (e) { ul.appendChild(noteLine('warning', t('tagWarn'), msgText(e))); });
       host.appendChild(ul);
       setSteps(false);
-      lastResult = null;
+      lastResult = null; lastInputs = null;
       return;
     }
     applyMessages(R.warnings || []);
+    lastInputs = inp;
     lastResult = R;
     renderResults(R);
   }
@@ -393,11 +422,40 @@
     var notes = el('div', 'notes');
     notes.appendChild(noteLine(R.preloadOK ? 'assume' : 'warning', R.preloadOK ? '✓' : t('tagWarn'), R.preloadOK ? t('preloadOk') : t('preloadBad')));
     (R.warnings || []).forEach(function (w) { notes.appendChild(noteLine('warning', t('tagWarn'), msgText(w))); });
-    (R.notes && R.notes.assumptions || []).forEach(function (a) { notes.appendChild(noteLine('assume', t('tagAssume'), a)); });
-    (R.notes && R.notes.pending || []).forEach(function (p) { notes.appendChild(noteLine('assume', t('tagPending'), p)); });
+    (R.notes && R.notes.assumptions || []).forEach(function (a) { notes.appendChild(noteLine('assume', t('tagAssume'), noteText(a))); });
+    (R.notes && R.notes.pending || []).forEach(function (p) { notes.appendChild(noteLine('assume', t('tagPending'), noteText(p))); });
     host.appendChild(notes);
 
+    if (RECHENWEG) host.appendChild(buildRechenweg(R));
+
     setSteps(true);
+  }
+
+  /* -------------------------------------------------------------- Rechenweg */
+  function buildRechenweg(R) {
+    var rw = RECHENWEG.build(R, lastInputs || collectInputs(), { lang: lang, fmt: fmt, fmtExp: fmtExp, eScrew: DATA.E_SCREW, data: DATA });
+    var det = el('details', 'rechenweg');
+    var sum = el('summary');
+    sum.appendChild(el('span', 'rw-title', t('rechenwegTitle')));
+    sum.appendChild(el('span', 'rw-hint', t('rwHint')));
+    det.appendChild(sum);
+    var body = el('div', 'rw-body');
+    rw.steps.forEach(function (st) {
+      var c = el('div', 'rw-step' + (st.safety ? ' is-safety' : ''));
+      var head = el('div', 'rw-head');
+      head.appendChild(el('span', 'rw-phase', st.phase));
+      head.appendChild(el('span', 'rw-name', st.title));
+      if (st.ok) { var v = el('span', 'rw-ok', '✓'); v.title = t('rwVerified'); head.appendChild(v); }
+      c.appendChild(head);
+      c.appendChild(el('div', 'rw-formula', st.formula));
+      if (st.sub && st.sub !== '—') { var sb = el('div', 'rw-sub'); sb.textContent = st.sub; c.appendChild(sb); }
+      var res = el('div', 'rw-res'); res.textContent = '= ' + st.result; c.appendChild(res);
+      if (st.note) c.appendChild(el('div', 'rw-note', st.note));
+      if (st.ref) c.appendChild(el('div', 'rw-ref', st.ref));
+      body.appendChild(c);
+    });
+    det.appendChild(body);
+    return det;
   }
 
   /* ------------------------------------------------------------- Step-Strip */

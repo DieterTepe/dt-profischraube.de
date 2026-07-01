@@ -423,11 +423,11 @@
       var tcl = DATA.TIGHTENING[inp.tightening];
       if (!tcl) throw new Error('computeJoint: unbekanntes Anziehverfahren "' + inp.tightening + '"');
       alphaA = tcl.range[1];
-      notes.assumptions.push('alpha_A = oberer Bereichswert von "' + inp.tightening + '" (' + alphaA + ')');
+      notes.assumptions.push({ code: 'ASSUME_ALPHA_FROM_METHOD', method: inp.tightening, alphaA: alphaA, text: 'alpha_A = oberer Bereichswert von "' + inp.tightening + '" (' + alphaA + ')' });
     }
 
     var conn = inp.connection || 'DSV';
-    if (inp.connection == null) notes.assumptions.push('Verbindungsart = DSV angenommen');
+    if (inp.connection == null) notes.assumptions.push({ code: 'ASSUME_CONN_DSV', text: 'Verbindungsart = DSV angenommen' });
     // E_M (Ersatzteil Mutter/Einschraubteil): DSV -> Mutter aus Stahl (E_S);
     // ESV -> eingeschraubtes Teil = verspanntes Material (E_P).
     var E_M_eff = (inp.E_M != null) ? inp.E_M : (conn === 'ESV' ? inp.E_P : (inp.E_S || DATA.E_SCREW));
@@ -439,21 +439,21 @@
     } else {
       var pc = plateCompliance({ E_P: inp.E_P, d_w: inp.d_w, d_h: inp.d_h, D_A: inp.D_A, l_K: inp.l_K, connection: conn });
       deltaP = pc.deltaP; deltaPmodel = pc.model; tanPhi = pc.tanPhi; DAGr = pc.DAGr;
-      if (pc.model === 'cone+sleeve') notes.pending.push('delta_P Kegel+Huelse (mittlerer Fall) — Struktur nach VDI, separat validieren');
+      if (pc.model === 'cone+sleeve') notes.pending.push({ code: 'PENDING_DP_CONE_SLEEVE', text: 'delta_P Kegel+Huelse (mittlerer Fall) — Struktur nach VDI, separat validieren' });
     }
 
     var n = (inp.n != null) ? inp.n : 0.5;
-    if (inp.n == null) notes.assumptions.push('Krafteinleitungsfaktor n = 0.5 (unguenstig) angenommen');
+    if (inp.n == null) notes.assumptions.push({ code: 'ASSUME_N_DEFAULT', n: n, text: 'Krafteinleitungsfaktor n = 0.5 (unguenstig) angenommen' });
     var PhiK = phiK(deltaS, deltaP);
     var PhiEn = phiEn(deltaS, deltaP, n);
     var F_A = (inp.F_A != null) ? inp.F_A : (inp.F_Ao != null ? inp.F_Ao : 0);
-    if (inp.F_A == null && inp.F_Ao != null) notes.assumptions.push('Betriebskraft F_A = F_Ao (Oberlast) fuer die Vorspannkraftkette');
+    if (inp.F_A == null && inp.F_Ao != null) notes.assumptions.push({ code: 'ASSUME_FA_FROM_FAO', text: 'Betriebskraft F_A = F_Ao (Oberlast) fuer die Vorspannkraftkette' });
     var split = forceSplit(F_A, PhiEn);
 
     var f_Z = settlingAmount({ rz: inp.rz, mode: inp.loadMode || 'axial', seats: inp.seats, interfaces: inp.interfaces });
     var F_Z = settlingLoss({ f_Z: f_Z, deltaS: deltaS, deltaP: deltaP });
     var deltaFvth = inp.deltaFvth || 0;
-    if (inp.deltaFvth == null) notes.assumptions.push('thermischer Anteil dF_Vth = 0 (kein Temperatureinfluss)');
+    if (inp.deltaFvth == null) notes.assumptions.push({ code: 'ASSUME_DFVTH_ZERO', text: 'thermischer Anteil dF_Vth = 0 (kein Temperatureinfluss)' });
 
     var F_Mmin = assemblyPreloadMin({ F_Kerf: inp.F_Kerf, phiEn: PhiEn, F_A: F_A, F_Z: F_Z, deltaFvth: deltaFvth }).F_Mmin;
     var F_Mmax = assemblyPreloadMax({ F_Mmin: F_Mmin, alphaA: alphaA }).F_Mmax;
@@ -470,7 +470,7 @@
     var F_Smax = maxBoltForce({ F_Mzul: F_Mzul, F_SAmax: F_SAmax, deltaFvth: deltaFvth });
     var F_Vmax = F_Mzul - F_Z - deltaFvth; // fuer Flaechenpressung Betriebszustand
     var kTau = (inp.kTau != null) ? inp.kTau : 0.5;
-    notes.assumptions.push('Torsions-Restfaktor k_tau = ' + kTau + ' im Betrieb');
+    notes.assumptions.push({ code: 'ASSUME_KTAU', kTau: kTau, text: 'Torsions-Restfaktor k_tau = ' + kTau + ' im Betrieb' });
     var tauResidual = kTau * (threadTorque({ F_M: F_Mzul, P: g.P, d2: g.d2, muG: muG }) / pp.W_p);
     var os = operatingStress({ F_Smax: F_Smax, A_S: g.As, Rp02: Rp, tau: tauResidual });
 
@@ -478,7 +478,7 @@
     if (inp.F_Ao != null && inp.F_Au != null) {
       var sa = fatigueAmplitude({ F_SAo: PhiEn * inp.F_Ao, F_SAu: PhiEn * inp.F_Au, A0: (inp.A0 || g.As) });
       var sA = enduranceLimitSV(g.d);
-      notes.pending.push('Dauerfestigkeit nur SV (schlussverguetet); SG separat (Norm noetig)');
+      notes.pending.push({ code: 'PENDING_FATIGUE_SV', text: 'Dauerfestigkeit nur SV (schlussverguetet); SG separat (Norm noetig)' });
       fatigue = { sigma_a: sa, sigma_A: sA, S_D: (sa > 0 ? fatigueSafety(sA, sa) : Infinity) };
     }
 
@@ -492,12 +492,12 @@
     if (inp.F_Qmax != null && inp.F_Qmax > 0) {
       var qF = (inp.qF != null) ? inp.qF : 1;
       var FKQ = requiredClampForce({ F_Qmax: inp.F_Qmax, muT: (inp.muT || muG), qF: qF, M_Ymax: inp.M_Ymax, qM: inp.qM, ra: inp.ra });
-      notes.assumptions.push('Restklemmkraft F_KR = F_Mmin - F_Z - dF_Vth - (1-Phi_en)*F_A');
+      notes.assumptions.push({ code: 'ASSUME_FKR_FORMULA', text: 'Restklemmkraft F_KR = F_Mmin - F_Z - dF_Vth - (1-Phi_en)*F_A' });
       var F_KR = F_Mmin - F_Z - deltaFvth - (1 - PhiEn) * F_A;
       slip = { F_KQerf: FKQ, F_KR: F_KR, S_G: (F_KR > 0 && FKQ > 0 ? slipSafety({ F_KR: F_KR, F_KQerf: FKQ }) : 0) };
     }
 
-    notes.pending.push('R11 Mindesteinschraubtiefe — empirische Faktoren, Norm/SR1 noetig');
+    notes.pending.push({ code: 'PENDING_R11', text: 'R11 Mindesteinschraubtiefe — empirische Faktoren, Norm/SR1 noetig' });
 
     return {
       status: 'ok', notes: notes, warnings: vr.warnings,
