@@ -57,7 +57,12 @@
     var Rp = R.strength.Rp02, Rm = R.strength.Rm;
     var muG = R.muG, muK = R.muK, alphaA = R.alphaA, n = R.n;
     var conn = inp.connection || 'DSV';
-    var dFvth = inp.deltaFvth || 0;
+    /* Thermischer Anteil: bevorzugt aus dem Engine-Ergebnis (Assistent oder manuell),
+     * sonst aus der Eingabe. Positiv = Verlust. dFvthLoss = max(0; dFvth): ein
+     * Vorspann-GEWINN wird fuer F_Mmin/F_KR nicht gutgeschrieben (kalter Zustand
+     * massgeblich) — exakt wie in der Engine. */
+    var dFvth = (R.deltaFvth != null) ? R.deltaFvth : (inp.deltaFvth || 0);
+    var dFvthLoss = Math.max(0, dFvth);
     var F_A = (inp.F_A != null) ? inp.F_A : (inp.F_Ao != null ? inp.F_Ao : 0);
     var F_Ao = (inp.F_Ao != null) ? inp.F_Ao : F_A;
 
@@ -185,14 +190,34 @@
       ref: 'VDI 2230 Bl.1 · R4'
     });
 
+    /* ---- R4b: thermische Vorspannkraftaenderung (nur wenn Assistent aktiv) ---- */
+    if (R.thermal) {
+      var th = R.thermal;
+      var dFvth_rw = th.l_K * (th.alpha_S - th.alpha_P) * 1e-6 * th.dT / (dS + dP);
+      step({
+        id: 'dFvth', phase: 'R4',
+        titleI: { de: 'Thermische Vorspannkraftänderung ΔF_Vth', en: 'Thermal preload change ΔF_Vth', pt: 'Variação térmica da pré-tensão ΔF_Vth' },
+        formula: 'ΔF_Vth = l_K · (α_S − α_P) · ΔT / (δ_S + δ_P)',
+        sub: 'ΔF_Vth = ' + nf(th.l_K, 1) + ' · (' + nf(th.alpha_S, 1) + ' − ' + nf(th.alpha_P, 1) + ')·10⁻⁶ · ' + nf(th.dT, 1) + ' / (' + ef(dS) + ' + ' + ef(dP) + ')',
+        result: nf(dFvth_rw, 0) + ' N',
+        _val: dFvth_rw, _exp: R.deltaFvth,
+        noteI: {
+          de: 'Positiv = Vorspannverlust (wird bei der Montage vorgehalten), negativ = Gewinn im Warmzustand (wird für F_Mmin/F_KR nicht gutgeschrieben). VDI-Näherung: E-Moduln temperaturunabhängig.',
+          en: 'Positive = preload loss (compensated during assembly), negative = gain in the hot state (not credited for F_Mmin/F_KR). VDI approximation: elastic moduli independent of temperature.',
+          pt: 'Positivo = perda de pré-tensão (compensada na montagem), negativo = ganho no estado quente (não creditado em F_Mmin/F_KR). Aproximação VDI: módulos E independentes da temperatura.'
+        },
+        ref: 'VDI 2230 Bl.1 · R4'
+      });
+    }
+
     /* ---- R5: Mindest-Montagevorspannkraft F_Mmin ---- */
     var plateRelief = (1 - PhiEn) * F_A;
-    var F_Mmin = inp.F_Kerf + plateRelief + F_Z + dFvth;
+    var F_Mmin = inp.F_Kerf + plateRelief + F_Z + dFvthLoss;
     step({
       id: 'FMmin', phase: 'R5',
       titleI: { de: 'Mindest-Montagevorspannkraft F_Mmin', en: 'Minimum assembly preload F_Mmin', pt: 'Pré-tensão mínima de montagem F_Mmin' },
-      formula: 'F_Mmin = F_Kerf + (1 − Φ_en)·F_A + F_Z + ΔF_Vth',
-      sub: 'F_Mmin = ' + nf(inp.F_Kerf, 0) + ' + (1 − ' + nf(PhiEn, 4) + ')·' + nf(F_A, 0) + ' + ' + nf(F_Z, 0) + ' + ' + nf(dFvth, 0),
+      formula: 'F_Mmin = F_Kerf + (1 − Φ_en)·F_A + F_Z + max(0; ΔF_Vth)',
+      sub: 'F_Mmin = ' + nf(inp.F_Kerf, 0) + ' + (1 − ' + nf(PhiEn, 4) + ')·' + nf(F_A, 0) + ' + ' + nf(F_Z, 0) + ' + ' + nf(dFvthLoss, 0),
       result: nf(F_Mmin, 0) + ' N',
       _val: F_Mmin, _exp: R.F_Mmin,
       noteI: { de: 'Was die Verbindung mindestens braucht: Restklemmkraft, Kraftanteil der Platten, Setzverlust, Temperatur.', en: 'What the joint needs at minimum: residual clamp force, plate load share, embedding loss, temperature.', pt: 'O mínimo necessário: força residual de aperto, parcela das peças, perda por assentamento, temperatura.' },
@@ -507,12 +532,12 @@
         noteI: { de: 'Klemmkraft, die nötig ist, um die Querkraft per Reibung zu übertragen.', en: 'Clamp force needed to transmit the transverse force by friction.', pt: 'Força de aperto necessária para transmitir a força transversal por atrito.' },
         ref: 'VDI 2230 Bl.1 · R12'
       });
-      var F_KR = F_Mmin - F_Z - dFvth - (1 - PhiEn) * F_A;
+      var F_KR = F_Mmin - F_Z - dFvthLoss - (1 - PhiEn) * F_A;
       step({
         id: 'FKR', phase: 'R12',
         titleI: { de: 'Vorhandene Restklemmkraft F_KR', en: 'Available residual clamp force F_KR', pt: 'Força de aperto residual F_KR' },
-        formula: 'F_KR = F_Mmin − F_Z − ΔF_Vth − (1 − Φ_en)·F_A',
-        sub: 'F_KR = ' + nf(F_Mmin, 0) + ' − ' + nf(F_Z, 0) + ' − ' + nf(dFvth, 0) + ' − (1 − ' + nf(PhiEn, 4) + ')·' + nf(F_A, 0),
+        formula: 'F_KR = F_Mmin − F_Z − max(0; ΔF_Vth) − (1 − Φ_en)·F_A',
+        sub: 'F_KR = ' + nf(F_Mmin, 0) + ' − ' + nf(F_Z, 0) + ' − ' + nf(dFvthLoss, 0) + ' − (1 − ' + nf(PhiEn, 4) + ')·' + nf(F_A, 0),
         result: nf(F_KR, 0) + ' N',
         _val: F_KR, _exp: R.slip.F_KR,
         noteI: { de: 'Klemmkraft, die in der Trennfuge tatsächlich übrig bleibt.', en: 'Clamp force that actually remains in the interface.', pt: 'Força de aperto que efetivamente permanece na junta.' },

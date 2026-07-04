@@ -158,17 +158,19 @@
    *  - ratio = Scherfestigkeitsverhaeltnis tau_B/R_m (R11).
    *  - E  = Elastizitaetsmodul (N/mm^2).
    *  - pG = Grenzflaechenpressung (N/mm^2), VDI 2230 Tab. A9 (via schweizer-fn); Mg: Decker/Ettenmayer.
+   *  - alpha = Waermeausdehnungskoeffizient [10^-6/K], Richtwert 20..100 Grad C (Tabellenwerk,
+   *    kein Norm-Anspruch; editierbar ueber "eigener Wert"-Haken im Thermik-Assistenten).
    *  - rmDefault/grade = konservative, editierbare UI-Vorbelegungen (kein Norm-Anspruch). */
   var TAU_RATIO = {
-    stahl:     { ratio: 0.65, vdiRange: [0.65, 0.85], E: 210000, pG: 630, rmDefault: 600, grade: 'C45 vergütet',  src: 'VDI 2230-1:2015, Tab. 6 (Verguetungsstahl 0,65..0,85; unterer Rand)', label: { de: 'Stahl (verguetet/gehaertet)', en: 'steel (quenched & tempered)', pt: 'aço (temperado e revenido)' } },
-    stahl_bau: { ratio: 0.80, vdiRange: [0.80, 0.85], E: 210000, pG: 450, rmDefault: 360, grade: 'S235',          src: 'VDI 2230-1:2015, Tab. 6 (Baustahl 0,80..0,85; unterer Rand)', label: { de: 'Bau-/Automatenstahl', en: 'structural/free-cutting steel', pt: 'aço estrutural/de corte livre' } },
-    einsatz:   { ratio: 0.85, vdiRange: [0.85, 1.00], E: 210000, pG: 900, rmDefault: 800, grade: '16MnCr5',       src: 'VDI 2230-1:2015, Tab. 6 (Einsatzstahl 0,85..1,0; unterer Rand) / Anh. B3', label: { de: 'Einsatzstahl (z. B. 16MnCr5)', en: 'case-hardening steel (e.g. 16MnCr5)', pt: 'aço de cementação (p. ex. 16MnCr5)' } },
-    austenit:  { ratio: 0.80, vdiRange: [0.80, 0.80], E: 200000, pG: 210, rmDefault: 500, grade: 'X5CrNiMo17-12-2 (A4)', src: 'VDI 2230-1:2015, Tab. 6 (Austenit lösungsgeglüht 0,80)', label: { de: 'Rostfrei/Austenit (A2/A4)', en: 'stainless/austenitic (A2/A4)', pt: 'inoxidável/austenítico (A2/A4)' } },
-    gjs:       { ratio: 0.90, E: 175000, pG: 600, rmDefault: 400, grade: 'GJS-400',       src: 'VDI 2230-1:2015 via Lork/Hanke (GJS 0,90)',           label: { de: 'Sphaeroguss GJS', en: 'nodular cast iron GJS', pt: 'ferro fundido nodular GJS' } },
-    gjl:       { ratio: 1.15, E: 110000, pG: 850, rmDefault: 250, grade: 'GJL-250',       src: 'VDI 2230-1:2015 via Lork/Hanke (GJL 1,15)',           label: { de: 'Grauguss GJL', en: 'grey cast iron GJL', pt: 'ferro fundido cinzento GJL' } },
-    alu_knet:  { ratio: 0.60, E: 70000,  pG: 230, rmDefault: 260, grade: 'EN AW-6082',    src: 'VDI 2230-1:2015 via Lork/Hanke (Alu-Knet 0,60)',      label: { de: 'Aluminium-Knetlegierung', en: 'wrought aluminium alloy', pt: 'liga de alumínio forjado' } },
-    alu_guss:  { ratio: 0.52, E: 70000,  pG: 220, rmDefault: 200, grade: 'AlSi-Guss',     src: 'VDI 2230-1:2015 via Lork/Hanke (Alu-Guss 0,52)',      label: { de: 'Aluminium-Gusslegierung', en: 'cast aluminium alloy', pt: 'liga de alumínio fundido' } },
-    mg_guss:   { ratio: 0.55, E: 45000,  pG: 140, rmDefault: 150, grade: 'AZ91',          src: 'Schätzwert (kein VDI-Beleg)', label: { de: 'Magnesium-Legierung', en: 'magnesium alloy', pt: 'liga de magnésio' } }
+    stahl:     { ratio: 0.65, vdiRange: [0.65, 0.85], E: 210000, pG: 630, alpha: 11.5, rmDefault: 600, grade: 'C45 vergütet',  src: 'VDI 2230-1:2015, Tab. 6 (Verguetungsstahl 0,65..0,85; unterer Rand)', label: { de: 'Stahl (verguetet/gehaertet)', en: 'steel (quenched & tempered)', pt: 'aço (temperado e revenido)' } },
+    stahl_bau: { ratio: 0.80, vdiRange: [0.80, 0.85], E: 210000, pG: 450, alpha: 11.5, rmDefault: 360, grade: 'S235',          src: 'VDI 2230-1:2015, Tab. 6 (Baustahl 0,80..0,85; unterer Rand)', label: { de: 'Bau-/Automatenstahl', en: 'structural/free-cutting steel', pt: 'aço estrutural/de corte livre' } },
+    einsatz:   { ratio: 0.85, vdiRange: [0.85, 1.00], E: 210000, pG: 900, alpha: 11.5, rmDefault: 800, grade: '16MnCr5',       src: 'VDI 2230-1:2015, Tab. 6 (Einsatzstahl 0,85..1,0; unterer Rand) / Anh. B3', label: { de: 'Einsatzstahl (z. B. 16MnCr5)', en: 'case-hardening steel (e.g. 16MnCr5)', pt: 'aço de cementação (p. ex. 16MnCr5)' } },
+    austenit:  { ratio: 0.80, vdiRange: [0.80, 0.80], E: 200000, pG: 210, alpha: 16.0, rmDefault: 500, grade: 'X5CrNiMo17-12-2 (A4)', src: 'VDI 2230-1:2015, Tab. 6 (Austenit lösungsgeglüht 0,80)', label: { de: 'Rostfrei/Austenit (A2/A4)', en: 'stainless/austenitic (A2/A4)', pt: 'inoxidável/austenítico (A2/A4)' } },
+    gjs:       { ratio: 0.90, E: 175000, pG: 600, alpha: 12.0, rmDefault: 400, grade: 'GJS-400',       src: 'VDI 2230-1:2015 via Lork/Hanke (GJS 0,90)',           label: { de: 'Sphaeroguss GJS', en: 'nodular cast iron GJS', pt: 'ferro fundido nodular GJS' } },
+    gjl:       { ratio: 1.15, E: 110000, pG: 850, alpha: 10.0, rmDefault: 250, grade: 'GJL-250',       src: 'VDI 2230-1:2015 via Lork/Hanke (GJL 1,15)',           label: { de: 'Grauguss GJL', en: 'grey cast iron GJL', pt: 'ferro fundido cinzento GJL' } },
+    alu_knet:  { ratio: 0.60, E: 70000,  pG: 230, alpha: 23.0, rmDefault: 260, grade: 'EN AW-6082',    src: 'VDI 2230-1:2015 via Lork/Hanke (Alu-Knet 0,60)',      label: { de: 'Aluminium-Knetlegierung', en: 'wrought aluminium alloy', pt: 'liga de alumínio forjado' } },
+    alu_guss:  { ratio: 0.52, E: 70000,  pG: 220, alpha: 21.0, rmDefault: 200, grade: 'AlSi-Guss',     src: 'VDI 2230-1:2015 via Lork/Hanke (Alu-Guss 0,52)',      label: { de: 'Aluminium-Gusslegierung', en: 'cast aluminium alloy', pt: 'liga de alumínio fundido' } },
+    mg_guss:   { ratio: 0.55, E: 45000,  pG: 140, alpha: 26.0, rmDefault: 150, grade: 'AZ91',          src: 'Schätzwert (kein VDI-Beleg)', label: { de: 'Magnesium-Legierung', en: 'magnesium alloy', pt: 'liga de magnésio' } }
   };
   /* Bolzen-Scherfestigkeitsverhaeltnis tau_B,S / R_m,S der Schraube (Stahl), klassenabhaengig.
    * VDI 2230 Bl.1 nutzt nach Thomala eine mit der Zugfestigkeit fallende Reihe:
@@ -181,6 +183,12 @@
     'A2-70': 0.80, 'A4-70': 0.80, 'A4-80': 0.80   // Austenit loesungsgeglueht, VDI 2230-1 Tab. 6
   };
   var BOLT_TAU_RATIO = 0.62;   // Default/Fallback (10.9); bestaetigt VDI 2230 Bl.1 Anh. B1/B5 (Ruoss)
+
+  /* Waermeausdehnung der SCHRAUBE [10^-6/K], Richtwert 20..100 Grad C.
+   * Auswahl automatisch ueber die Festigkeitsklasse (stainless-Flag in STRENGTH):
+   * Schraubenstahl ~11,5 · Austenit (A2/A4) ~16. Editierbar per Haken im
+   * Thermik-Assistenten ("eigener Wert"). */
+  var BOLT_ALPHA = { steel: 11.5, stainless: 16.0 };
 
   /* ===== Dauerfestigkeits-Abminderung nach Oberflaeche/Ausfuehrung ===========
    * Faktor auf sigma_A (SV und SG). VDI 2230 Bl.1: HV-Garnituren ca. 20 % geringer;
@@ -333,6 +341,20 @@
         rz: 'Rz10-40', seats: 2, interfaces: 1
       }
     },
+    'alu_flansch_dT': {
+      label: 'Alu-Flansch M12 8.8 mit Temperaturhub (Thermik-Assistent, dT = −40 K)',
+      quelle: 'illustratives Testbeispiel (nicht normvalidiert; VDI-Naeherung dF_Vth = l_K*(a_S−a_P)*dT/(d_S+d_P), E(T) konstant)',
+      illustrativ: true,
+      input: {
+        size: 'M12', strengthClass: '8.8', frictionClass: 'B',
+        tightening: 'drehmomentgesteuert', connection: 'DSV', n: 0.5,
+        lShank: 20, lThreadFree: 10,
+        l_K: 30, d_w: 20, d_h: 13.5, D_A: 55,
+        plateMat: 'alu_knet', E_P: 70000, p_G: 230,
+        F_Kerf: 8000, F_A: 5000, rz: 'Rz10-40', seats: 2, interfaces: 1,
+        thermalAssist: true, dT: -40, alpha_S: 11.5, alpha_P: 23.0
+      }
+    },
     'rostfrei_a4_m10': {
       label: 'Rostfrei M10 A4-80 in Austenit (Einschraubung, R11)',
       quelle: 'illustratives Testbeispiel (nicht normvalidiert; rostfrei/Austenit, σ_A nur Näherung)',
@@ -381,6 +403,7 @@
     TAU_RATIO: TAU_RATIO,
     BOLT_TAU_RATIO: BOLT_TAU_RATIO,
     BOLT_TAU_BY_CLASS: BOLT_TAU_BY_CLASS,
+    BOLT_ALPHA: BOLT_ALPHA,
     SURFACE_FATIGUE: SURFACE_FATIGUE,
     PRESETS: PRESETS,
     meta: meta

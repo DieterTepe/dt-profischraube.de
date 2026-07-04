@@ -389,13 +389,67 @@
         pt: 'Sem o visto, o campo p_G assume a pressão limite do material selecionado (VDI 2230 tabela A9) e fica bloqueado. Marque para introduzir o seu próprio valor.'
       }
     },
+    thermalAssist: {
+      label: { de: 'Thermik-Assistent (ΔF_Vth aus ΔT)', en: 'Thermal assistant (ΔF_Vth from ΔT)', pt: 'Assistente térmico (ΔF_Vth a partir de ΔT)' },
+      group: 'Belastung', type: 'bool', advanced: true, diagram: null,
+      help: {
+        de: 'Rechnet die thermische Vorspannkraftaenderung dF_Vth automatisch aus der Temperaturaenderung dT und den Waermeausdehnungskoeffizienten von Schraube (alpha_S) und Teilen (alpha_P): dF_Vth = l_K*(alpha_S − alpha_P)*dT / (delta_S + delta_P). Positiv = Vorspannverlust. VDI-Naeherung: Temperaturabhaengigkeit der E-Moduln ist NICHT enthalten. Aktiv wird das manuelle dF_Vth-Feld gesperrt und automatisch gefuellt.',
+        en: 'Automatically computes the thermal preload change ΔF_Vth from the temperature change ΔT and the expansion coefficients of bolt (α_S) and parts (α_P): ΔF_Vth = l_K·(α_S − α_P)·ΔT / (δ_S + δ_P). Positive = preload loss. VDI approximation: the temperature dependence of the elastic moduli is NOT included. When active, the manual ΔF_Vth field is locked and auto-filled.',
+        pt: 'Calcula automaticamente a variação térmica da pré-tensão ΔF_Vth a partir da variação de temperatura ΔT e dos coeficientes de dilatação do parafuso (α_S) e das peças (α_P): ΔF_Vth = l_K·(α_S − α_P)·ΔT / (δ_S + δ_P). Positivo = perda de pré-tensão. Aproximação VDI: a dependência dos módulos E com a temperatura NÃO está incluída. Quando ativo, o campo manual ΔF_Vth é bloqueado e preenchido automaticamente.'
+      }
+    },
+    dT: {
+      label: { de: 'Temperaturaenderung ΔT', en: 'Temperature change ΔT', pt: 'Variação de temperatura ΔT' },
+      group: 'Belastung', type: 'number', unit: 'K', min: -273, max: 1000, warnMin: -100, warnMax: 250, decimals: 1, advanced: true, diagram: null, dependsOn: 'thermalAssist',
+      help: {
+        de: 'Temperaturaenderung gegenueber der Montagetemperatur (Betrieb minus Montage). Erwaermung positiv, Abkuehlung negativ. Beispiel: Montage bei 20 Grad C, Betrieb bei −20 Grad C -> dT = −40 K. Bei Alu-Teilen auf Stahlschraube ist die ABKUEHLUNG der kritische Fall (Vorspannverlust).',
+        en: 'Temperature change relative to the assembly temperature (operation minus assembly). Heating positive, cooling negative. Example: assembly at 20 °C, operation at −20 °C → ΔT = −40 K. For aluminium parts on a steel bolt, COOLING is the critical case (preload loss).',
+        pt: 'Variação de temperatura em relação à temperatura de montagem (serviço menos montagem). Aquecimento positivo, arrefecimento negativo. Exemplo: montagem a 20 °C, serviço a −20 °C → ΔT = −40 K. Com peças de alumínio e parafuso de aço, o ARREFECIMENTO é o caso crítico (perda de pré-tensão).'
+      }
+    },
+    alpha_S: {
+      label: { de: 'Ausdehnung Schraube α_S', en: 'Bolt expansion α_S', pt: 'Dilatação do parafuso α_S' },
+      group: 'Belastung', type: 'number', unit: '10⁻⁶/K', min: 1, max: 40, warnMin: 8, warnMax: 30, decimals: 1, advanced: true, diagram: null, dependsOn: 'thermalAssist',
+      help: {
+        de: 'Waermeausdehnungskoeffizient der Schraube in 10^-6 pro Kelvin (Richtwert 20..100 Grad C). Wird automatisch aus der Festigkeitsklasse vorbelegt: Schraubenstahl ~11,5 · rostfrei/Austenit (A2/A4) ~16. Zum Abweichen den Haken "alpha_S selbst eingeben" setzen.',
+        en: 'Thermal expansion coefficient of the bolt in 10⁻⁶ per kelvin (guide value 20–100 °C). Pre-filled automatically from the property class: bolt steel ~11.5 · stainless/austenitic (A2/A4) ~16. Tick "enter α_S manually" to deviate.',
+        pt: 'Coeficiente de dilatação térmica do parafuso em 10⁻⁶ por kelvin (valor indicativo 20–100 °C). Preenchido automaticamente a partir da classe de resistência: aço de parafuso ~11,5 · inoxidável/austenítico (A2/A4) ~16. Marque "introduzir α_S manualmente" para desviar.'
+      }
+    },
+    asCustom: {
+      label: { de: 'α_S selbst eingeben', en: 'Enter α_S manually', pt: 'Introduzir α_S manualmente' },
+      group: 'Belastung', type: 'bool', advanced: true, diagram: null, dependsOn: 'thermalAssist',
+      help: {
+        de: 'Ohne Haken uebernimmt alpha_S den Richtwert der gewaehlten Festigkeitsklasse (Stahl ~11,5 · Austenit ~16, in 10^-6/K) und ist gesperrt. Setze den Haken fuer einen eigenen Wert.',
+        en: 'Without the tick, α_S takes the guide value of the selected property class (steel ~11.5 · austenitic ~16, in 10⁻⁶/K) and is locked. Tick it to enter your own value.',
+        pt: 'Sem o visto, α_S assume o valor indicativo da classe de resistência escolhida (aço ~11,5 · austenítico ~16, em 10⁻⁶/K) e fica bloqueado. Marque para introduzir o seu próprio valor.'
+      }
+    },
+    alpha_P: {
+      label: { de: 'Ausdehnung Teile α_P', en: 'Parts expansion α_P', pt: 'Dilatação das peças α_P' },
+      group: 'Belastung', type: 'number', unit: '10⁻⁶/K', min: 1, max: 40, warnMin: 8, warnMax: 30, decimals: 1, advanced: true, diagram: null, dependsOn: 'thermalAssist',
+      help: {
+        de: 'Waermeausdehnungskoeffizient der verspannten Teile in 10^-6 pro Kelvin (Richtwert 20..100 Grad C). Wird automatisch aus dem Plattenwerkstoff vorbelegt (Stahl ~11,5 · GJL ~10 · GJS ~12 · Austenit ~16 · Alu ~21..23 · Mg ~26). Zum Abweichen den Haken "alpha_P selbst eingeben" setzen. Ohne Plattenwerkstoff-Auswahl frei eingeben.',
+        en: 'Thermal expansion coefficient of the clamped parts in 10⁻⁶ per kelvin (guide value 20–100 °C). Pre-filled automatically from the plate material (steel ~11.5 · GJL ~10 · GJS ~12 · austenitic ~16 · aluminium ~21–23 · Mg ~26). Tick "enter α_P manually" to deviate. Without a plate-material selection, enter it freely.',
+        pt: 'Coeficiente de dilatação térmica das peças apertadas em 10⁻⁶ por kelvin (valor indicativo 20–100 °C). Preenchido automaticamente a partir do material das peças (aço ~11,5 · GJL ~10 · GJS ~12 · austenítico ~16 · alumínio ~21–23 · Mg ~26). Marque "introduzir α_P manualmente" para desviar. Sem seleção de material, introduza livremente.'
+      }
+    },
+    apCustom: {
+      label: { de: 'α_P selbst eingeben', en: 'Enter α_P manually', pt: 'Introduzir α_P manualmente' },
+      group: 'Belastung', type: 'bool', advanced: true, diagram: null, dependsOn: 'thermalAssist',
+      help: {
+        de: 'Ohne Haken uebernimmt alpha_P den Richtwert des gewaehlten Plattenwerkstoffs (in 10^-6/K) und ist gesperrt. Setze den Haken fuer einen eigenen Wert.',
+        en: 'Without the tick, α_P takes the guide value of the selected plate material (in 10⁻⁶/K) and is locked. Tick it to enter your own value.',
+        pt: 'Sem o visto, α_P assume o valor indicativo do material das peças escolhido (em 10⁻⁶/K) e fica bloqueado. Marque para introduzir o seu próprio valor.'
+      }
+    },
     deltaFvth: {
       label: { de: 'thermischer Vorspannverlust dF_Vth', en: 'Thermal preload change ΔF_Vth', pt: 'Variação térmica da pré-tensão ΔF_Vth' },
       group: 'Belastung', type: 'number', unit: 'N', max: 1e8, advanced: true, diagram: null,
       help: {
-        de: 'Vorspannkraftaenderung durch Temperatur (unterschiedliche Waermedehnung von Schraube und Teilen). 0, wenn ohne Temperatureinfluss gerechnet wird.',
-        en: 'Change in preload due to temperature (different thermal expansion of bolt and parts). 0 if calculating without temperature influence.',
-        pt: 'Variação da pré-tensão devido à temperatura (dilatação térmica diferente do parafuso e das peças). 0 se calcular sem influência da temperatura.'
+        de: 'Vorspannkraftaenderung durch Temperatur (unterschiedliche Waermedehnung von Schraube und Teilen). Positiv = Verlust. 0, wenn ohne Temperatureinfluss gerechnet wird. Ist der Thermik-Assistent aktiv, wird dieses Feld automatisch gefuellt und gesperrt (Eingabe dann ueber dT). Ein Vorspann-GEWINN (negativer Wert) wird fuer F_Mmin und die Restklemmkraft konservativ NICHT gutgeschrieben, da der kalte Zustand massgeblich bleibt.',
+        en: 'Change in preload due to temperature (different thermal expansion of bolt and parts). Positive = loss. 0 if calculating without temperature influence. If the thermal assistant is active, this field is auto-filled and locked (input then via ΔT). A preload GAIN (negative value) is conservatively NOT credited for F_Mmin and the residual clamp force, since the cold state remains governing.',
+        pt: 'Variação da pré-tensão devido à temperatura (dilatação térmica diferente do parafuso e das peças). Positivo = perda. 0 se calcular sem influência da temperatura. Com o assistente térmico ativo, este campo é preenchido automaticamente e bloqueado (entrada via ΔT). Um GANHO de pré-tensão (valor negativo) NÃO é creditado, de forma conservadora, em F_Mmin e na força de aperto residual, pois o estado frio permanece determinante.'
       }
     },
     kTau: {
@@ -609,6 +663,15 @@
       if (!num(inp.qM) || inp.qM < 1) err('qM', 'MY_NEEDS_QM', 'Bei einem Drehmoment M_Ymax muss die Zahl der Trennfugen q_M (>= 1) angegeben werden.');
       if (!num(inp.ra) || inp.ra <= 0) err('ra', 'MY_NEEDS_RA', 'Bei einem Drehmoment M_Ymax muss der Wirkradius r_a (> 0) angegeben werden.');
       if (!num(inp.F_Qmax) || inp.F_Qmax <= 0) warn('M_Ymax', 'MY_WITHOUT_FQ', 'Ein Drehmoment M_Ymax wirkt im Gleitnachweis nur zusammen mit einer Querkraft F_Qmax. Ohne F_Qmax bleibt es unberuecksichtigt.');
+    }
+
+    /* 8) Thermik-Assistent: braucht dT; alpha_P muss herleitbar sein (Feld oder Plattenwerkstoff).
+     *    alpha_S hat immer einen Klassen-Fallback (Stahl/Austenit) und ist daher nie blockierend. */
+    if (inp.thermalAssist === true) {
+      if (!num(inp.dT)) err('dT', 'THERMAL_DT_MISSING', 'Der Thermik-Assistent ist aktiv, aber die Temperaturaenderung dT fehlt. Erwaermung positiv, Abkuehlung negativ (z. B. Montage 20 Grad C, Betrieb -20 Grad C -> dT = -40 K).');
+      var apDerivable = num(inp.alpha_P) || (present(inp.plateMat) && DATA.TAU_RATIO[inp.plateMat] && DATA.TAU_RATIO[inp.plateMat].alpha != null);
+      if (!apDerivable) err('alpha_P', 'THERMAL_ALPHA_P_MISSING', 'Der Thermik-Assistent ist aktiv, aber alpha_P der verspannten Teile fehlt. Entweder einen Plattenwerkstoff waehlen (belegt alpha_P automatisch) oder alpha_P direkt eingeben (in 10^-6/K, z. B. Alu ~23).');
+      if (num(inp.dT) && inp.dT === 0) warn('dT', 'THERMAL_DT_ZERO', 'dT = 0: Der Thermik-Assistent liefert dF_Vth = 0 (kein Temperatureinfluss).');
     }
 
     return { ok: errors.length === 0, errors: errors, warnings: warnings };

@@ -146,9 +146,9 @@
   /* ===== R4: Setzkraftverlust ============================================
    * f_Z [um] aus der Setzbetragstabelle (Gewinde + Auflagen + Trennfugen),
    * F_Z [N] = (f_Z/1000) / (delta_S + delta_P).  Eindeutige Physik, voll testbar.
-   * THERMISCHER Anteil dF'_Vth NICHT enthalten (Vorzeichen + E(T) heikel ->
-   * wie der Verformungskegel erst nach Norm-Validierung). assemblyPreloadMin
-   * nimmt ihn als optionalen Eingang deltaFvth (Standard 0). */
+   * THERMISCHER Anteil dF'_Vth: seit v4.6 rechnet ihn der Thermik-Assistent in
+   * computeJoint aus dT (VDI-Naeherung, E(T) konstant); assemblyPreloadMin nimmt
+   * ihn weiterhin als optionalen Eingang deltaFvth (Standard 0, positiv = Verlust). */
   function settlingAmount(cfg) {
     var t = DATA.SETTLING[cfg.rz];
     if (!t) throw new Error('Unbekannte Rautiefenklasse: ' + cfg.rz);
@@ -534,10 +534,36 @@
 
     var f_Z = settlingAmount({ rz: inp.rz, mode: inp.loadMode || 'axial', seats: inp.seats, interfaces: inp.interfaces });
     var F_Z = settlingLoss({ f_Z: f_Z, deltaS: deltaS, deltaP: deltaP });
-    var deltaFvth = inp.deltaFvth || 0;
-    if (inp.deltaFvth == null) notes.assumptions.push({ code: 'ASSUME_DFVTH_ZERO', text: 'thermischer Anteil dF_Vth = 0 (kein Temperatureinfluss)' });
+    /* Thermischer Anteil dF'_Vth: entweder ueber den Thermik-Assistenten aus dT
+     * (VDI-Naeherung: dF_Vth = l_K*(alpha_S - alpha_P)*dT/(delta_S + delta_P),
+     * alpha in 1e-6/K, positiv = Vorspannverlust; Temperaturabhaengigkeit der
+     * E-Moduln NICHT enthalten) oder manuell als Eingang deltaFvth. */
+    var deltaFvth, thermal = null;
+    if (inp.thermalAssist === true) {
+      var aS_u = (inp.alpha_S != null) ? inp.alpha_S : (s.stainless ? DATA.BOLT_ALPHA.stainless : DATA.BOLT_ALPHA.steel);
+      var aP_u = (inp.alpha_P != null) ? inp.alpha_P
+        : (inp.plateMat && DATA.TAU_RATIO[inp.plateMat] ? DATA.TAU_RATIO[inp.plateMat].alpha : null);
+      if (aP_u == null || !isFinite(aP_u)) throw new Error('Thermik-Assistent: alpha_P fehlt (Plattenwerkstoff waehlen oder alpha_P angeben)');
+      if (!isFinite(inp.dT)) throw new Error('Thermik-Assistent: dT fehlt');
+      var dSum = deltaS + deltaP;
+      deltaFvth = inp.l_K * (aS_u - aP_u) * 1e-6 * inp.dT / dSum;
+      thermal = { dT: inp.dT, alpha_S: aS_u, alpha_P: aP_u, l_K: inp.l_K, dSum: dSum, deltaFvth: deltaFvth };
+      if (inp.alpha_S == null) notes.assumptions.push({ code: 'ASSUME_ALPHA_S_CLASS', text: 'alpha_S = ' + aS_u + '*10^-6/K aus der Festigkeitsklasse (' + (s.stainless ? 'Austenit' : 'Schraubenstahl') + ', Richtwert 20..100 Grad C).' });
+      if (inp.alpha_P == null) notes.assumptions.push({ code: 'ASSUME_ALPHA_P_MAT', text: 'alpha_P = ' + aP_u + '*10^-6/K aus dem Plattenwerkstoff (Richtwert 20..100 Grad C).' });
+      notes.assumptions.push({ code: 'ASSUME_THERMAL_APPROX', text: 'Thermik (VDI-Naeherung): dF_Vth = l_K*(alpha_S - alpha_P)*dT/(delta_S + delta_P) = ' + Math.round(deltaFvth) + ' N. Temperaturabhaengigkeit der E-Moduln NICHT enthalten.' });
+    } else {
+      deltaFvth = inp.deltaFvth || 0;
+      if (inp.deltaFvth == null) notes.assumptions.push({ code: 'ASSUME_DFVTH_ZERO', text: 'thermischer Anteil dF_Vth = 0 (kein Temperatureinfluss)' });
+    }
+    /* Konservativ: ein Vorspann-GEWINN (deltaFvth < 0, z. B. Alu-Teile bei Erwaermung)
+     * wird fuer F_Mmin und die Restklemmkraft F_KR NICHT gutgeschrieben — der kalte
+     * Zustand (dT = 0) bleibt dort massgeblich. In F_Smax und F_Vmax wirkt der
+     * vorzeichenrichtige Wert: ein Gewinn ERHOEHT dort Schraubenkraft bzw.
+     * Pressung und wird damit konservativ erfasst. */
+    var deltaFvthLoss = Math.max(0, deltaFvth);
+    if (deltaFvth < 0) notes.assumptions.push({ code: 'HINT_DFVTH_GAIN', text: 'dF_Vth = ' + Math.round(deltaFvth) + ' N ist ein Vorspann-GEWINN (Warmzustand). Fuer F_Mmin/F_KR nicht gutgeschrieben (kalter Zustand massgeblich); in F_Smax/F_Vmax erhoeht er Schraubenkraft bzw. Pressung.' });
 
-    var F_Mmin = assemblyPreloadMin({ F_Kerf: inp.F_Kerf, phiEn: PhiEn, F_A: F_A, F_Z: F_Z, deltaFvth: deltaFvth }).F_Mmin;
+    var F_Mmin = assemblyPreloadMin({ F_Kerf: inp.F_Kerf, phiEn: PhiEn, F_A: F_A, F_Z: F_Z, deltaFvth: deltaFvthLoss }).F_Mmin;
     var F_Mmax = assemblyPreloadMax({ F_Mmin: F_Mmin, alphaA: alphaA }).F_Mmax;
 
     var pp = permissiblePreload({ Rp02: Rp, A_S: g.As, d2: g.d2, d_S: g.ds, P: g.P, muG: muG });
@@ -617,8 +643,8 @@
     if (inp.F_Qmax != null && inp.F_Qmax > 0) {
       var qF = (inp.qF != null) ? inp.qF : 1;
       var FKQ = requiredClampForce({ F_Qmax: inp.F_Qmax, muT: (inp.muT || muG), qF: qF, M_Ymax: inp.M_Ymax, qM: inp.qM, ra: inp.ra });
-      notes.assumptions.push({ code: 'ASSUME_FKR_FORMULA', text: 'Restklemmkraft F_KR = F_Mmin - F_Z - dF_Vth - (1-Phi_en)*F_A' });
-      var F_KR = F_Mmin - F_Z - deltaFvth - (1 - PhiEn) * F_A;
+      notes.assumptions.push({ code: 'ASSUME_FKR_FORMULA', text: 'Restklemmkraft F_KR = F_Mmin - F_Z - max(0; dF_Vth) - (1-Phi_en)*F_A (Vorspanngewinn nicht gutgeschrieben)' });
+      var F_KR = F_Mmin - F_Z - deltaFvthLoss - (1 - PhiEn) * F_A;
       slip = { F_KQerf: FKQ, F_KR: F_KR, S_G: (F_KR > 0 && FKQ > 0 ? slipSafety({ F_KR: F_KR, F_KQerf: FKQ }) : 0), muT: (inp.muT || muG), qF: qF, F_Qmax: inp.F_Qmax };
     }
 
@@ -651,6 +677,7 @@
       deltaS: deltaS, deltaP: deltaP, deltaP_model: deltaPmodel, tanPhi: tanPhi, DAGr: DAGr, PhiK: PhiK, PhiEn: PhiEn,
       E_S: E_S_eff,
       F_SA: split.F_SA, F_PA: split.F_PA, f_Z: f_Z, F_Z: F_Z,
+      deltaFvth: deltaFvth, deltaFvthLoss: deltaFvthLoss, thermal: thermal,
       F_Mmin: F_Mmin, F_Mmax: F_Mmax, F_Mzul: F_Mzul, preloadOK: preloadOK,
       M_A: torque.M_A, M_G: torque.M_G, M_K: torque.M_K,
       F_Vmax: F_Vmax, F_Smax: F_Smax, sigma_zmax: os.sigma_zmax, sigma_redB: os.sigma_redB, S_F: os.S_F,
