@@ -31,6 +31,7 @@
       case 'connection':    return ['DSV', 'ESV'];
       case 'loadMode':      return ['axial', 'shear'];
       case 'threadFinish':  return ['SV', 'SG'];
+      case 'surfaceFinish': return keys(DATA.SURFACE_FATIGUE);
       case 'matGroupM':     return keys(DATA.TAU_RATIO);
       case 'plateMat':      return keys(DATA.TAU_RATIO);
       default:              return [];
@@ -59,10 +60,11 @@
       var v = vals[i], note = '', rec = false, F;
       if (name === 'frictionClass' && (F = DATA.FRICTION[v])) { note = 'μG/μK ≈ ' + F.range[0] + '..' + F.range[1]; rec = !!F.recommended; }
       else if (name === 'tightening' && (F = DATA.TIGHTENING[v])) { note = 'αA ' + F.range[0] + '..' + F.range[1]; rec = !!F.recommended; }
-      else if (name === 'strengthClass' && (F = DATA.STRENGTH[v])) { note = 'Rm ' + F.Rm + ' / Rp0,2 ' + F.Rp + ' N/mm²'; }
+      else if (name === 'strengthClass' && (F = DATA.STRENGTH[v])) { note = 'Rm ' + F.Rm + ' / Rp0,2 ' + F.Rp + ' N/mm²' + (F.stainless ? ' · ' + (lang === 'en' ? 'stainless (ISO 3506)' : lang === 'pt' ? 'inoxidável (ISO 3506)' : 'rostfrei (ISO 3506)') : ''); }
       else if (name === 'connection') { note = pick(CONN[v]); }
       else if (name === 'loadMode') { note = pick(LM[v]); }
       else if (name === 'threadFinish') { note = pick(TF[v]); rec = (v === 'SV'); }
+      else if (name === 'surfaceFinish' && (F = DATA.SURFACE_FATIGUE[v])) { note = pick(F.label); rec = (v === 'blank'); }
       else if (name === 'matGroupM' && (F = DATA.TAU_RATIO[v])) { note = pick(F.label) + ' · τB/Rm ' + F.ratio + (F.src && /Sch[aä]tz/.test(F.src) ? ' · Schätzwert (kein Norm-Beleg)' : ''); }
       else if (name === 'plateMat' && (F = DATA.TAU_RATIO[v])) { note = pick(F.label) + ' · E ' + F.E + ' · p_G ' + F.pG + ' N/mm²' + (F.src && /Sch[aä]tz/.test(F.src) ? ' · p_G Schätzwert' : ''); }
       else if (name === 'rz' && DATA.SETTLING[v]) { note = pick(RZ); }
@@ -452,6 +454,15 @@
         de: 'SV = schlussverguetet (Gewinde vor der Waermebehandlung gerollt/geschnitten): niedrigere, vorspannungsunabhaengige Dauerhaltbarkeit sigma_A,SV. SG = schlussgewalzt (Gewinde nach der Waermebehandlung gerollt): hoehere, von der mittleren Schraubenkraft abhaengige Dauerhaltbarkeit sigma_A,SG. Im Zweifel SV (konservativ).',
         en: 'SV = rolled/cut before heat treatment: lower, preload-independent endurance limit sigma_A,SV. SG = rolled after heat treatment: higher endurance limit sigma_A,SG that depends on the mean bolt force. When in doubt, SV (conservative).',
         pt: 'SV = laminada/cortada antes do tratamento térmico: limite de fadiga mais baixo e independente da pré-tensão. SG = laminada após o tratamento térmico: limite de fadiga mais alto, dependente da força média do parafuso. Em caso de dúvida, SV (conservador).'
+      }
+    },
+    surfaceFinish: {
+      label: { de: 'Oberfläche/Ausführung (Dauerfestigkeit)', en: 'Surface/type (fatigue)', pt: 'Superfície/tipo (fadiga)' },
+      group: 'Nachweise', type: 'enum', enumOf: 'surfaceFinish', diagram: null, dependsOn: 'threadFinish',
+      help: {
+        de: 'Wie ist die Schraube ausgeführt? Das beeinflusst NUR die Dauerhaltbarkeit bei schwingender Last. "blank" = normale Maschinenbauschraube (keine Abminderung). "feuerverzinkt" = durch die Zinkschicht und Kerbwirkung rund 30 % geringere Dauerfestigkeit. "HV-Garnitur" = hochfeste Stahlbau-Garnitur, rund 20 % geringer. Im Zweifel "blank". (Quelle: VDI 2230 Bl.1.)',
+        en: 'How is the bolt finished? This affects ONLY the fatigue strength under alternating load. "plain" = normal machine bolt (no reduction). "hot-dip galvanized" = about 30% lower fatigue strength due to the zinc layer and notch effect. "HV set" = high-strength structural set, about 20% lower. When in doubt, "plain". (Source: VDI 2230 sheet 1.)',
+        pt: 'Como é o acabamento do parafuso? Afeta APENAS a resistência à fadiga sob carga alternada. "liso" = parafuso de máquina normal (sem redução). "galvanizado a quente" = cerca de 30% menos resistência à fadiga devido à camada de zinco e ao efeito de entalhe. "conjunto HV" = conjunto estrutural de alta resistência, cerca de 20% menos. Em caso de dúvida, "liso". (Fonte: VDI 2230 folha 1.)'
       }
     },
     r11: {

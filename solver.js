@@ -71,6 +71,17 @@
     return (f.range[0] + f.range[1]) / 2;
   }
 
+  /* Bolzen-Scherfestigkeitsverhaeltnis tau_B,S/R_m,S, klassenabhaengig (R11).
+   * VDI 2230 Bl.1 (nach Thomala): faellt mit steigender Zugfestigkeit
+   * (8.8 = 0,65 · 10.9 = 0,62 · 12.9 = 0,60 · niedrige Klassen ~0,70).
+   * Reine Rechengroesse -> aus der Festigkeitsklasse abgeleitet, keine Nutzereingabe.
+   * Fallback: DATA.BOLT_TAU_RATIO (0,62) bei unbekannter Klasse. */
+  function boltShearRatio(strengthClass) {
+    var tbl = DATA.BOLT_TAU_BY_CLASS || {};
+    var r = (strengthClass != null) ? tbl[strengthClass] : undefined;
+    return (typeof r === 'number' && r > 0) ? r : DATA.BOLT_TAU_RATIO;
+  }
+
   /* ===== R3: Nachgiebigkeiten & Kraftverhaeltnis ==========================
    * Reines Federmodell (delta = l/(E*A), Reihenschaltung) — physikalisch
    * eindeutig und vollstaendig testbar.
@@ -250,8 +261,9 @@
 
   /* ===== R9: Schwingbeanspruchung (Dauerhaltbarkeit) =====================
    * sigma_a = (F_SAo - F_SAu)/(2*A0)   (A0 = A_S; bei Dehnschrauben A_0)
-   * SV (schlussverguetet): sigma_ASV = 0.85*(150/d + 45) [N/mm^2] -> validate.
-   * SG (schlussgerollt, hoeher/vorspannungsabhaengig) NOCH NICHT enthalten.
+   * SV (schlussverguetet): sigma_ASV = 0.85*(150/d + 45) [N/mm^2].
+   * SG (schlussgewalzt) wird in computeJoint ueber enduranceLimitSG ergaenzt
+   * (vorspannungsabhaengig). Oberflaechen-Abminderung (SURFACE_FATIGUE) wird dort angewandt.
    * S_D = sigma_A / sigma_a */
   function fatigueAmplitude(cfg) {
     if (!(cfg.A0 > 0)) throw new Error('fatigueAmplitude: A0 > 0 noetig');
@@ -492,10 +504,15 @@
 
     var conn = inp.connection || 'DSV';
     if (inp.connection == null) notes.assumptions.push({ code: 'ASSUME_CONN_DSV', text: 'Verbindungsart = DSV angenommen' });
+    // Schrauben-E-Modul: Nutzerwert > klassenspezifisch (rostfrei ~200 GPa) > Standard-Stahl.
+    var E_S_eff = (inp.E_S != null) ? inp.E_S : (s.E || DATA.E_SCREW);
+    if (inp.E_S == null && s.E && s.E !== DATA.E_SCREW) {
+      notes.assumptions.push({ code: 'ASSUME_E_S_CLASS', text: 'E-Modul Schraube = ' + s.E + ' N/mm^2 (aus Festigkeitsklasse ' + inp.strengthClass + ', z. B. rostfrei); nicht der Standard-Stahlwert.' });
+    }
     // E_M (Ersatzteil Mutter/Einschraubteil): DSV -> Mutter aus Stahl (E_S);
     // ESV -> eingeschraubtes Teil = verspanntes Material (E_P).
-    var E_M_eff = (inp.E_M != null) ? inp.E_M : (conn === 'ESV' ? inp.E_P : (inp.E_S || DATA.E_SCREW));
-    var deltaS = boltCompliance({ d: g.d, d3: g.d3, lShank: inp.lShank, lThreadFree: inp.lThreadFree, E_S: (inp.E_S || DATA.E_SCREW), E_M: E_M_eff, l_SK: inp.l_SK, l_G: inp.l_G, l_M: inp.l_M }).deltaS;
+    var E_M_eff = (inp.E_M != null) ? inp.E_M : (conn === 'ESV' ? inp.E_P : E_S_eff);
+    var deltaS = boltCompliance({ d: g.d, d3: g.d3, lShank: inp.lShank, lThreadFree: inp.lThreadFree, E_S: E_S_eff, E_M: E_M_eff, l_SK: inp.l_SK, l_G: inp.l_G, l_M: inp.l_M }).deltaS;
 
     var deltaP, deltaPmodel, tanPhi = null, DAGr = null;
     if (inp.deltaP != null) {
@@ -558,8 +575,20 @@
           notes.pending.push({ code: 'SG_OUT_OF_RANGE', ratio: sg.ratio, text: 'SG nicht anwendbar (F_Sm/F_0,2min = ' + sg.ratio.toFixed(2) + ' ausserhalb ~0,3..1) — konservativ mit SV gerechnet' });
         }
       }
-      if (finish === 'SV') notes.pending.push({ code: 'PENDING_FATIGUE_SV', text: 'Dauerfestigkeit nur SV (schlussverguetet); SG separat (Norm noetig)' });
-      fatigue = { sigma_a: sa, sigma_A: sA, S_D: (sa > 0 ? fatigueSafety(sA, sa) : Infinity), finish: finish, sigma_ASV: sASV, F_Sm: F_Sm, F02: F02, sgRatio: sgRatio };
+      if (finish === 'SV') notes.pending.push({ code: 'PENDING_FATIGUE_SV', text: 'Dauerfestigkeit nach SV (schlussverguetet, vorspannungsunabhaengig). Fuer schlussgewalzte Schrauben SG waehlen.' });
+      // Oberflaechen-/Ausfuehrungs-Abminderung (VDI: HV -20 %, feuerverzinkt -30 %) auf sigma_A
+      var surfKey = inp.surfaceFinish || 'blank';
+      var surf = DATA.SURFACE_FATIGUE[surfKey] || DATA.SURFACE_FATIGUE.blank;
+      var sA_beforeSurf = sA;
+      sA = sA * surf.factor;
+      if (surf.factor !== 1) {
+        notes.assumptions.push({ code: 'ASSUME_SURFACE_FATIGUE', factor: surf.factor, surface: surfKey, text: 'Dauerfestigkeit mit Faktor ' + surf.factor + ' abgemindert (Ausfuehrung: ' + surfKey + ', VDI 2230 Bl.1).' });
+      }
+      // Rostfreie/austenitische Schrauben: sigma_A-Formel ist fuer 8.8..12.9 kalibriert -> Naeherung
+      if (s.stainless) {
+        notes.pending.push({ code: 'PENDING_FATIGUE_STAINLESS', text: 'Rostfreie/austenitische Schraube: die Dauerfestigkeitsformel (sigma_A) ist fuer Stahl 8.8..12.9 kalibriert und gilt hier nur als Naeherung — im Zweifel Herstellerangaben verwenden.' });
+      }
+      fatigue = { sigma_a: sa, sigma_A: sA, S_D: (sa > 0 ? fatigueSafety(sA, sa) : Infinity), finish: finish, sigma_ASV: sASV, F_Sm: F_Sm, F02: F02, sgRatio: sgRatio, surface: surfKey, surfaceFactor: surf.factor, sigma_A_preSurface: sA_beforeSurf };
     }
 
     var pressure = null;
@@ -599,17 +628,19 @@
     if (r11Active) {
       var mzu = ((inp.connection === 'ESV') ? 3 : 2) * g.P;      // Sackloch ~3*P, Durchsteck/Mutter ~2*P
       var tauBM = mgTau.ratio * inp.Rm_M;
-      var tauBS = DATA.BOLT_TAU_RATIO * Rm;
+      var boltRatio = boltShearRatio(inp.strengthClass);         // klassenabhaengig (VDI/Thomala)
+      var tauBS = boltRatio * Rm;
       var me = minEngagementVDI({ d: g.d, P: g.P, As: g.As, RmS: Rm, tauBM: tauBM, tauBS: tauBS });
       var m_eff_vorh = inp.m_vorh - mzu;
       var S_A = m_eff_vorh / me.m_eff;
       engagement = {
         m_min: me.m_eff, m_zu: mzu, m_vorh: inp.m_vorh, m_eff_vorh: m_eff_vorh, S_A: S_A,
         RS: me.RS, branch: me.branch, C: me.C, C1: me.C1, F_mS: me.F_mS,
-        tauBM: tauBM, tauBS: tauBS, matGroupM: inp.matGroupM, Rm_M: inp.Rm_M, ok: S_A >= 1
+        tauBM: tauBM, tauBS: tauBS, matRatio: mgTau.ratio, boltRatio: boltRatio,
+        matSrc: mgTau.src, matGroupM: inp.matGroupM, Rm_M: inp.Rm_M, ok: S_A >= 1
       };
-      notes.assumptions.push({ code: 'ASSUME_R11_BASIS', text: 'R11-Basis: F_mS = 1,2*R_m,S*A_S; C1 = 1 (s/d >= 1,9); tau_B je Werkstoffgruppe (Richtwert)' });
-      notes.pending.push({ code: 'VALIDATE_R11', text: 'R11-Mindesteinschraubtiefe: Struktur nach VDI 2230 Bl.1 (Alexander/Ruoss). Werkstoff-Scherfestigkeiten sind Richtwerte — gegen die konkrete Norm-/Beispielquelle gegenpruefen.' });
+      notes.assumptions.push({ code: 'ASSUME_R11_BASIS', text: 'R11-Basis: F_mS = 1,2*R_m,S*A_S; C1 = 1 (s/d >= 1,9); tau_B,S klassenabhaengig (' + boltRatio.toFixed(2) + '*R_m,S); tau_B,M aus Werkstoffgruppe (' + mgTau.ratio + '*R_m,M).' });
+      notes.pending.push({ code: 'VALIDATE_R11', text: 'R11-Mindesteinschraubtiefe: Struktur nach VDI 2230 Bl.1 (Alexander/Ruoss). Scherfestigkeitsverhaeltnisse normbelegt (VDI 2230 Bl.1 Tab. 6 / Bild 36; Guss/Alu via Lork-Hanke). Als Auslegungswerkzeug gedacht — vor Produktivnutzung gegen die Originalnorm pruefen.' });
     } else {
       notes.pending.push({ code: 'PENDING_R11', text: 'Mindesteinschraubtiefe (R11): Es soll eher die Schraube brechen als das Gewinde ausreissen. Fuer den vollstaendigen Nachweis "R11 pruefen" aktivieren und Werkstoffgruppe des Innengewindes, dessen R_m sowie die vorhandene Einschraubtiefe m_vorh angeben. Richtwerte ohne Nachweis: Stahl ~1*d, Guss ~1,4*d, Aluminium ~2*d.' });
     }
@@ -618,6 +649,7 @@
       status: 'ok', notes: notes, warnings: vr.warnings,
       geometry: g, strength: { Rm: Rm, Rp02: Rp }, muG: muG, muK: muK, alphaA: alphaA, n: n,
       deltaS: deltaS, deltaP: deltaP, deltaP_model: deltaPmodel, tanPhi: tanPhi, DAGr: DAGr, PhiK: PhiK, PhiEn: PhiEn,
+      E_S: E_S_eff,
       F_SA: split.F_SA, F_PA: split.F_PA, f_Z: f_Z, F_Z: F_Z,
       F_Mmin: F_Mmin, F_Mmax: F_Mmax, F_Mzul: F_Mzul, preloadOK: preloadOK,
       M_A: torque.M_A, M_G: torque.M_G, M_K: torque.M_K,
@@ -644,6 +676,7 @@
     strength: strength,
     strengthFromCode: strengthFromCode,
     frictionMid: frictionMid,
+    boltShearRatio: boltShearRatio,
     boltCompliance: boltCompliance,
     plateComplianceSleeve: plateComplianceSleeve,
     connectionCoeff: connectionCoeff,

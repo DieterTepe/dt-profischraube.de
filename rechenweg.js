@@ -72,7 +72,9 @@
     }
 
     /* ---- R3: Schraubennachgiebigkeit delta_S ---- */
-    var E_S = (inp.E_S != null) ? inp.E_S : eScrew;
+    // E_S bevorzugt aus dem Engine-Ergebnis (beruecksichtigt rostfreie Klassen ~200 GPa),
+    // sonst Nutzerwert, sonst Default.
+    var E_S = (R.E_S != null) ? R.E_S : ((inp.E_S != null) ? inp.E_S : eScrew);
     var E_M = (inp.E_M != null) ? inp.E_M : (conn === 'ESV' ? inp.E_P : E_S);
     var A_N = Math.PI / 4 * g.d * g.d, A_d3 = Math.PI / 4 * g.d3 * g.d3;
     var l_SK = (inp.l_SK != null) ? inp.l_SK : 0.5 * g.d;
@@ -346,15 +348,31 @@
           formula: 'σ_A,SG = (2 − F_Sm/F_0,2min)·σ_A,SV',
           sub: 'σ_A,SG = (2 − ' + nf(R.fatigue.F_Sm, 0) + '/' + nf(R.fatigue.F02, 0) + ')·' + nf(sASV, 1),
           result: nf(sASG, 1) + ' N/mm²',
-          _val: sASG, _exp: R.fatigue.sigma_A,
+          _val: sASG, _exp: (R.fatigue.sigma_A_preSurface != null ? R.fatigue.sigma_A_preSurface : R.fatigue.sigma_A),
           noteI: { de: 'Schlussgewalzte Gewinde sind dauerfester; der Zuschlag sinkt mit steigender mittlerer Schraubenkraft (gültig F_Sm/F_0,2min ≈ 0,3…1).', en: 'Threads rolled after heat treatment endure more; the gain falls as the mean bolt force rises (valid F_Sm/F_0,2min ≈ 0.3…1).', pt: 'Roscas laminadas após tratamento térmico resistem mais; o ganho diminui com o aumento da força média (válido F_Sm/F_0,2min ≈ 0,3…1).' },
           ref: 'VDI 2230 Bl.1 · R9'
         });
       }
+      // Oberflaechen-/Ausfuehrungs-Abminderung (falls != blank) transparent zeigen
+      if (R.fatigue.surfaceFactor != null && R.fatigue.surfaceFactor !== 1) {
+        var sigmaA_red = sigmaA_fin * R.fatigue.surfaceFactor;
+        var pct = Math.round((1 - R.fatigue.surfaceFactor) * 100);
+        step({
+          id: 'sigmaA_surf', phase: 'R9',
+          titleI: { de: 'Abminderung σ_A (Ausführung)', en: 'Reduction of σ_A (finish)', pt: 'Redução de σ_A (acabamento)' },
+          formula: 'σ_A,red = f_O · σ_A',
+          sub: 'σ_A,red = ' + nf(R.fatigue.surfaceFactor, 2) + ' · ' + nf(sigmaA_fin, 1) + ' = ' + nf(sigmaA_red, 1) + ' N/mm²  (−' + pct + ' %)',
+          result: nf(sigmaA_red, 1) + ' N/mm²',
+          _val: sigmaA_red, _exp: R.fatigue.sigma_A,
+          noteI: { de: 'Ausführung „' + (R.fatigue.surface || '') + '": feuerverzinkte bzw. HV-Schrauben sind schwingend weniger belastbar (VDI 2230 Bl.1).', en: 'Finish "' + (R.fatigue.surface || '') + '": hot-dip galvanized or HV bolts endure less under cyclic load (VDI 2230 sheet 1).', pt: 'Acabamento "' + (R.fatigue.surface || '') + '": parafusos galvanizados ou HV resistem menos sob carga cíclica (VDI 2230 folha 1).' },
+          ref: 'VDI 2230 Bl.1 · R9'
+        });
+        sigmaA_fin = sigmaA_red;
+      }
       step({
         id: 'SD', phase: 'R9', safety: true,
         titleI: { de: 'Sicherheit Dauerhaltbarkeit S_D', en: 'Fatigue safety S_D', pt: 'Segurança à fadiga S_D' },
-        formula: (R.fatigue.finish === 'SG') ? 'S_D = σ_A,SG / σ_a' : 'S_D = σ_A,SV / σ_a',
+        formula: (R.fatigue.finish === 'SG') ? 'S_D = σ_A,SG / σ_a' : 'S_D = σ_A / σ_a',
         sub: 'S_D = ' + nf(sigmaA_fin, 1) + ' / ' + nf(sa, 1),
         result: nf(R.fatigue.S_D, 2),
         _val: (sa > 0 ? sigmaA_fin / sa : Infinity), _exp: R.fatigue.S_D,
@@ -408,15 +426,17 @@
         noteI: { de: 'Kraft, bei der die Schraube im Gewinde bricht — Ziel des Nachweises: die Schraube soll vor dem Innengewinde versagen.', en: 'Force at which the bolt fails in the thread — goal of the check: the bolt should fail before the internal thread.', pt: 'Força à qual o parafuso rompe na rosca — objetivo: o parafuso deve falhar antes da rosca interna.' },
         ref: 'VDI 2230 Bl.1 · R11'
       });
+      var boltRatio = (e.boltRatio != null) ? e.boltRatio : 0.62;
       step({
         id: 'r11_tau', phase: 'R11',
         titleI: { de: 'Scherfestigkeiten τ_B,M / τ_B,S', en: 'Shear strengths τ_B,M / τ_B,S', pt: 'Resistências ao corte τ_B,M / τ_B,S' },
-        formula: 'τ_B,M = (τ_B/R_m)_M·R_m,M   ·   τ_B,S = 0,62·R_m,S',
-        sub: 'τ_B,M = ' + nf(e.tauBM, 0) + ' N/mm²   ·   τ_B,S = ' + nf(e.tauBS, 0) + ' N/mm²',
+        formula: 'τ_B,M = (τ_B/R_m)_M·R_m,M   ·   τ_B,S = (τ_B/R_m)_S·R_m,S',
+        sub: '(τ_B/R_m)_M = ' + nf(e.matRatio != null ? e.matRatio : (e.tauBM / (inp.Rm_M || 1)), 2) + '  →  τ_B,M = ' + nf(e.tauBM, 0) + ' N/mm²'
+          + '\n(τ_B/R_m)_S = ' + nf(boltRatio, 2) + ' (' + LT('klassenabhängig', 'class-dependent', 'conforme a classe') + ')  →  τ_B,S = ' + nf(e.tauBS, 0) + ' N/mm²',
         result: 'τ_B,M = ' + nf(e.tauBM, 0) + '  ·  τ_B,S = ' + nf(e.tauBS, 0) + ' N/mm²',
-        _val: e.tauBS, _exp: 0.62 * Rm,
-        noteI: { de: 'Abscherfestigkeit von Innengewinde-Werkstoff und Schraube; ihr Verhältnis entscheidet, welches Gewinde zuerst abschert. Die τ_B/R_m-Werte des Bauteils sind Richtwerte.', en: 'Shear strength of the internal-thread material and the bolt; their ratio decides which thread strips first. The τ_B/R_m values of the part are guide values.', pt: 'Resistência ao corte do material da rosca interna e do parafuso; a sua relação decide qual rosca se arranca primeiro. Os valores τ_B/R_m da peça são indicativos.' },
-        ref: 'VDI 2230 Bl.1 · R11'
+        _val: e.tauBS, _exp: boltRatio * Rm,
+        noteI: { de: 'Abscherfestigkeit von Innengewinde-Werkstoff und Schraube; ihr Verhältnis entscheidet, welches Gewinde zuerst abschert. τ_B/R_m normbelegt (VDI 2230 Bl.1 Tab. 6; Bolzen klassenabhängig nach Thomala).', en: 'Shear strength of the internal-thread material and the bolt; their ratio decides which thread strips first. τ_B/R_m sourced from VDI 2230 sheet 1 Table 6 (bolt value class-dependent per Thomala).', pt: 'Resistência ao corte do material da rosca interna e do parafuso; a sua relação decide qual rosca se arranca primeiro. τ_B/R_m conforme a VDI 2230 folha 1 Tab. 6 (parafuso dependente da classe, segundo Thomala).' },
+        ref: 'VDI 2230 Bl.1 · R11 · Tab. 6'
       });
       step({
         id: 'r11_RS', phase: 'R11',

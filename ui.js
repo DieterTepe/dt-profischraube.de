@@ -321,8 +321,8 @@
   var NOTE = {
     ASSUME_SG_FSM: { en: 'SG (rolled after heat treatment): F_Sm = F_Mzul + Φ_en·(F_Ao+F_Au)/2 for σ_A,SG.', pt: 'SG (laminada após tratamento térmico): F_Sm = F_Mzul + Φ_en·(F_Ao+F_Au)/2 para σ_A,SG.' },
     SG_OUT_OF_RANGE: { en: 'SG not applicable (F_Sm/F_0,2min = {ratio}, outside ~0.3..1) — computed conservatively with SV.', pt: 'SG não aplicável (F_Sm/F_0,2min = {ratio}, fora de ~0,3..1) — calculado de forma conservadora com SV.' },
-    ASSUME_R11_BASIS: { en: 'R11 basis: F_mS = 1.2·R_m,S·A_S; C1 = 1 (s/d ≥ 1.9); τ_B per material group (guide value).', pt: 'Base R11: F_mS = 1,2·R_m,S·A_S; C1 = 1 (s/d ≥ 1,9); τ_B por grupo de material (valor indicativo).' },
-    VALIDATE_R11: { en: 'R11 minimum engagement: structure per VDI 2230 sheet 1 (Alexander/Ruoss). Material shear strengths are guide values — cross-check against the specific standard/example source.', pt: 'Profundidade mínima R11: estrutura segundo a VDI 2230 folha 1 (Alexander/Ruoss). As resistências ao corte dos materiais são valores indicativos — confirme com a fonte normativa/exemplo específica.' },
+    ASSUME_R11_BASIS: { en: 'R11 basis: F_mS = 1.2·R_m,S·A_S; C1 = 1 (s/d ≥ 1.9); τ_B,S is class-dependent (per Thomala/VDI), τ_B,M from the material group (VDI 2230-1 Table 6).', pt: 'Base R11: F_mS = 1,2·R_m,S·A_S; C1 = 1 (s/d ≥ 1,9); τ_B,S dependente da classe (segundo Thomala/VDI), τ_B,M do grupo de material (VDI 2230-1 Tab. 6).' },
+    VALIDATE_R11: { en: 'R11 minimum engagement: structure per VDI 2230 sheet 1 (Alexander/Ruoss). Shear-strength ratios are sourced (VDI 2230-1 Table 6 / Figure 36; cast iron & aluminium via Lork/Hanke). Intended as a design tool — verify against the original standard before production use.', pt: 'Profundidade mínima R11: estrutura segundo a VDI 2230 folha 1 (Alexander/Ruoss). As relações de resistência ao corte têm fonte (VDI 2230-1 Tab. 6 / Fig. 36; ferro fundido e alumínio via Lork/Hanke). Concebido como ferramenta de projeto — verifique com a norma original antes de uso produtivo.' },
     ASSUME_ALPHA_FROM_METHOD: { en: 'α_A = upper range value of "{method}" ({alphaA})', pt: 'α_A = valor superior do intervalo de "{method}" ({alphaA})' },
     ASSUME_CONN_DSV: { en: 'Joint type assumed as DSV (through-bolt with nut).', pt: 'Tipo de união assumido como DSV (parafuso passante com porca).' },
     ASSUME_N_DEFAULT: { en: 'Load-introduction factor n = {n} (unfavourable/safe) assumed.', pt: 'Fator de introdução de carga n = {n} (desfavorável/seguro) assumido.' },
@@ -333,7 +333,10 @@
     ASSUME_FKR_FORMULA: { en: 'Residual clamp force F_KR = F_Mmin − F_Z − ΔF_Vth − (1−Φ_en)·F_A.', pt: 'Força de aperto residual F_KR = F_Mmin − F_Z − ΔF_Vth − (1−Φ_en)·F_A.' },
     PENDING_DP_CONE_SLEEVE: { en: 'δ_P cone+sleeve (intermediate case) — structure per VDI, validate separately.', pt: 'δ_P cone+manga (caso intermédio) — estrutura conforme VDI, validar separadamente.' },
     TANPHI_CLAMPED: { en: 'Cone angle tan(φ) limited to its physical lower bound — the geometry (l_K/d_w) is far outside the empirical formula’s validity range. δ_P is not reliable here; check the geometry.', pt: 'Ângulo do cone tan(φ) limitado ao seu mínimo físico — a geometria (l_K/d_w) está muito fora do intervalo de validade da fórmula empírica. δ_P não é fiável aqui; verifique a geometria.' },
-    PENDING_FATIGUE_SV: { en: 'Fatigue only for SV (heat-treated); SG separately (standard needed).', pt: 'Fadiga apenas para SV (temperado); SG em separado (norma necessária).' },
+    PENDING_FATIGUE_SV: { en: 'Fatigue per SV (heat-treated after rolling, preload-independent). For threads rolled after heat treatment, choose SG.', pt: 'Fadiga segundo SV (temperada após laminagem, independente da pré-tensão). Para roscas laminadas após tratamento térmico, escolha SG.' },
+    ASSUME_SURFACE_FATIGUE: { en: 'Fatigue strength reduced by factor {factor} (finish: {surface}, VDI 2230 sheet 1).', pt: 'Resistência à fadiga reduzida pelo fator {factor} (acabamento: {surface}, VDI 2230 folha 1).' },
+    PENDING_FATIGUE_STAINLESS: { en: 'Stainless/austenitic bolt: the σ_A fatigue formula is calibrated for steel 8.8..12.9 and is only an approximation here — when in doubt use manufacturer data.', pt: 'Parafuso inoxidável/austenítico: a fórmula de fadiga σ_A é calibrada para aço 8.8..12.9 e é aqui apenas uma aproximação — em caso de dúvida, use dados do fabricante.' },
+    ASSUME_E_S_CLASS: { en: 'Bolt Young’s modulus taken from the property class (e.g. stainless ≈ 200,000 N/mm²), not the standard steel value.', pt: 'Módulo de elasticidade do parafuso conforme a classe (p. ex. inoxidável ≈ 200 000 N/mm²), não o valor padrão do aço.' },
     PENDING_R11: { en: 'Minimum engagement depth (R11): the bolt should break before the thread strips. For the full check, enable “Check R11” and enter the internal-thread material group, its R_m and the available engagement m_vorh. Guide values without the check: steel ~1·d, cast iron ~1.4·d, aluminium ~2·d.', pt: 'Profundidade mínima de aperto (R11): o parafuso deve romper antes de a rosca se arrancar. Para a verificação completa, ative “Verificar R11” e indique o grupo de material da rosca interna, o seu R_m e a profundidade de aperto disponível m_vorh. Valores indicativos sem a verificação: aço ~1·d, ferro fundido ~1,4·d, alumínio ~2·d.' }
   };
   function noteText(item) {
@@ -508,6 +511,13 @@
       row('σ_A (SG)', fmt(R.fatigue.sigma_A, 1) + unit('N/mm²'));
       row('F_Sm/F_0,2min', fmt(R.fatigue.sgRatio, 3));
     }
+    // Dauerfestigkeits-Ausführung / Oberflächen-Abminderung, falls wirksam
+    if (R.fatigue && R.fatigue.surfaceFactor != null && R.fatigue.surfaceFactor !== 1) {
+      var surfLbl = { blank: { de: 'blank', en: 'plain', pt: 'liso' }, verzinkt: { de: 'feuerverzinkt', en: 'hot-dip galv.', pt: 'galvanizado' }, hv: { de: 'HV-Garnitur', en: 'HV set', pt: 'conjunto HV' } };
+      var sfL = surfLbl[R.fatigue.surface] || { de: R.fatigue.surface, en: R.fatigue.surface, pt: R.fatigue.surface };
+      var afLbl = { de: 'Ausführung (σ_A-Faktor)', en: 'Finish (σ_A factor)', pt: 'Acabamento (fator σ_A)' };
+      row(afLbl[lang] || afLbl.de, (sfL[lang] || sfL.de) + ' · ×' + fmt(R.fatigue.surfaceFactor, 2));
+    }
     // R10: Montage- und Betriebspressung getrennt zeigen, wenn beide vorliegen
     if (R.pressure && R.pressure.p_max_M != null && R.pressure.p_max_B != null) {
       row('p_max (Montage)', fmt(R.pressure.p_max_M, 0) + unit('N/mm²'));
@@ -532,6 +542,15 @@
       eRow('S_A', fmt(e.S_A, 2));
       eRow('R_S', fmt(e.RS, 3));
       eRow('maßgeb. Gewinde', (brLab[e.branch] && (brLab[e.branch][lang] || brLab[e.branch].de)) || e.branch);
+      // Scherfestigkeitsverhaeltnisse transparent ausweisen (normbelegt, dreisprachig)
+      if (e.matRatio != null && e.boltRatio != null) {
+        var ratioLbl = { de: 'τ_B/R_m (Bauteil · Bolzen)', en: 'τ_B/R_m (part · bolt)', pt: 'τ_B/R_m (peça · parafuso)' };
+        eRow(ratioLbl[lang] || ratioLbl.de, fmt(e.matRatio, 2) + ' · ' + fmt(e.boltRatio, 2));
+        if (e.matSrc) {
+          var srcLbl = { de: 'Quelle τ_B/R_m', en: 'Source τ_B/R_m', pt: 'Fonte τ_B/R_m' };
+          eRow(srcLbl[lang] || srcLbl.de, e.matSrc);
+        }
+      }
       host.appendChild(eTbl);
     }
 
