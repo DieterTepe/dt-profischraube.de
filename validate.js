@@ -581,10 +581,17 @@
       if (y > 8) warn('D_A', 'CONE_Y_RANGE', 'Verhaeltnis D_A/d_w = ' + y.toFixed(2) + ' ist sehr gross; die empirische Kegelwinkelformel ist dort nicht mehr abgesichert (Richtwert <= ~8). delta_P wird extrapoliert.', [1, 8]);
     }
 
-    /* 5) Festigkeitsklasse ausserhalb VDI-Hauptgeltungsbereich (Warnung) */
+    /* 5) Festigkeitsklasse ausserhalb VDI-Hauptgeltungsbereich (Warnung, blockiert nicht).
+     *    Rostfreie/austenitische Klassen (A2/A4) sind bewusst unterstuetzt -> eigene, klar
+     *    als zulaessig formulierte Meldung. Niedrige Stahlklassen -> generischer Scope-Hinweis. */
     if (present(inp.strengthClass) && enumValues('strengthClass').indexOf(inp.strengthClass) >= 0 &&
         ['8.8', '9.8', '10.9', '12.9'].indexOf(inp.strengthClass) < 0) {
-      warn('strengthClass', 'STRENGTH_SCOPE', 'Festigkeitsklasse ' + inp.strengthClass + ' liegt ausserhalb des Hauptgeltungsbereichs der VDI 2230 (8.8 bis 12.9). Die Nachweise sind fuer hochfeste Schrauben formuliert.');
+      var scls = DATA.STRENGTH[inp.strengthClass];
+      if (scls && scls.stainless) {
+        warn('strengthClass', 'STRENGTH_STAINLESS', 'Rostfreie/austenitische Schraube ' + inp.strengthClass + ' (ISO 3506) — zulaessig und wird vollstaendig gerechnet. Hinweis: VDI 2230 ist primaer fuer hochfesten Stahl (8.8..12.9) formuliert; der Dauerfestigkeitswert sigma_A gilt hier nur als Naeherung, und rostfreie Schrauben neigen zum Fressen (Reibung/Vorspannung sorgfaeltig waehlen).');
+      } else {
+        warn('strengthClass', 'STRENGTH_SCOPE', 'Festigkeitsklasse ' + inp.strengthClass + ' liegt ausserhalb des Hauptgeltungsbereichs der VDI 2230 (8.8 bis 12.9). Die Nachweise sind fuer hochfeste Schrauben formuliert.');
+      }
     }
 
     /* 6) R11 aktiviert -> Zusatzfelder anmahnen (Warnung, blockiert nicht;
