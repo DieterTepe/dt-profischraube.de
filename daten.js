@@ -341,8 +341,9 @@
         size: 'M10', strengthClass: 'A4-80', frictionClass: 'C',
         tightening: 'drehmomentgesteuert', connection: 'ESV', n: 0.5,
         lShank: 12, lThreadFree: 15, l_SK: 4, l_M: 3.3,
-        l_K: 24, d_w: 15, d_h: 11, D_A: 40, plateMat: 'austenit', E_P: 200000, p_G: 210,
-        F_Kerf: 6000, F_Ao: 5000, F_Au: 1000, rz: 'Rz10-40', seats: 1, interfaces: 1,
+        l_K: 24, d_w: 20, d_h: 11, D_A: 40, plateMat: 'austenit', E_P: 200000, p_G: 210,
+        F_Kerf: 6000, F_Ao: 5000, F_Au: 1000, F_Qmax: 800, muT: 0.20, qF: 1,
+        rz: 'Rz10-40', seats: 1, interfaces: 1,
         r11: true, matGroupM: 'austenit', Rm_M: 500, m_vorh: 15
       }
     },
