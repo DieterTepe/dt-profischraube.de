@@ -36,7 +36,8 @@
       grp_Belastung: 'Belastung', grp_Setzen: 'Setzen & Trennflächen', grp_Nachweise: 'Nachweise & Optionen',
       statusOk: 'Berechnung vollständig.', statusInvalid: 'Eingaben unvollständig oder ungültig — bitte korrigieren.',
       kvCaption: 'Weitere Kennwerte', kvEngage: 'R11 – Mindesteinschraubtiefe', recommended: 'empfohlen', nb: 'n. b.', customOpt: '— eigene Eingabe —', rmHintPrefix: 'Richtwert', rmHintCustom: 'eigener Wert',
-      tagWarn: 'Grenze', tagAssume: 'Annahme', tagPending: 'offen',
+      tagWarn: 'Grenze', tagAssume: 'Annahme', tagPending: 'offen', tagFix: 'Tipp',
+      improveTitle: 'So wird die Ampel grün (Zielwert S ≥ 1,2):', improveCoupling: 'Danach die übrigen Nachweise erneut prüfen — die Sicherheiten hängen zusammen.',
       sub_F: 'Fließen (Streckgrenze)', sub_D: 'Dauerhaltbarkeit', sub_P: 'Flächenpressung', sub_G: 'Gleiten/Reibschluss', sub_A: 'Einschraubtiefe (R11)',
       na_D: 'keine Wechsel-/Schwelllast (F_Ao/F_Au)', na_P: 'keine Grenzpressung p_G angegeben', na_G: 'keine Querkraft (F_Q) — kein Gleitnachweis nötig', na_A: '„R11 prüfen" nicht aktiviert',
       thrNote: 'Ampel sind Richtwerte (grün ≥ 1,2 · gelb ≥ 1,0 · rot < 1,0). Die erforderliche Sicherheit hängt vom Anwendungsfall ab.',
@@ -54,7 +55,8 @@
       grp_Belastung: 'Loading', grp_Setzen: 'Embedding & interfaces', grp_Nachweise: 'Verifications & options',
       statusOk: 'Calculation complete.', statusInvalid: 'Input incomplete or invalid — please correct.',
       kvCaption: 'Further values', kvEngage: 'R11 – minimum length of engagement', recommended: 'recommended', nb: 'n/a', customOpt: '— custom input —', rmHintPrefix: 'Guide value', rmHintCustom: 'custom value',
-      tagWarn: 'limit', tagAssume: 'assumption', tagPending: 'open',
+      tagWarn: 'limit', tagAssume: 'assumption', tagPending: 'open', tagFix: 'tip',
+      improveTitle: 'How to turn the indicator green (target S ≥ 1.2):', improveCoupling: 'Then re-check the other verifications — the safety factors are coupled.',
       sub_F: 'Yield', sub_D: 'Fatigue', sub_P: 'Surface pressure', sub_G: 'Slipping/friction grip', sub_A: 'Engagement (R11)',
       na_D: 'no fluctuating load (F_Ao/F_Au)', na_P: 'no limit pressure p_G given', na_G: 'no transverse force (F_Q) — no slip check needed', na_A: '“Check R11” not enabled',
       thrNote: 'Indicator colours are guide values (green ≥ 1.2 · amber ≥ 1.0 · red < 1.0). Required safety depends on the application.',
@@ -72,7 +74,8 @@
       grp_Belastung: 'Carregamento', grp_Setzen: 'Assentamento e interfaces', grp_Nachweise: 'Verificações e opções',
       statusOk: 'Cálculo completo.', statusInvalid: 'Entrada incompleta ou inválida — corrija.',
       kvCaption: 'Outros valores', kvEngage: 'R11 – profundidade mínima de aperto', recommended: 'recomendado', nb: 'n/d', customOpt: '— entrada própria —', rmHintPrefix: 'Valor indicativo', rmHintCustom: 'valor próprio',
-      tagWarn: 'limite', tagAssume: 'suposição', tagPending: 'pendente',
+      tagWarn: 'limite', tagAssume: 'suposição', tagPending: 'pendente', tagFix: 'dica',
+      improveTitle: 'Como tornar o indicador verde (alvo S ≥ 1,2):', improveCoupling: 'Depois, reavalie as outras verificações — os fatores de segurança estão acoplados.',
       sub_F: 'Escoamento', sub_D: 'Fadiga', sub_P: 'Pressão superficial', sub_G: 'Escorregamento/atrito', sub_A: 'Aperto (R11)',
       na_D: 'sem carga alternada (F_Ao/F_Au)', na_P: 'sem pressão limite p_G', na_G: 'sem força transversal (F_Q) — sem verificação de escorregamento', na_A: '“Verificar R11” não ativado',
       thrNote: 'As cores são valores indicativos (verde ≥ 1,2 · amarelo ≥ 1,0 · vermelho < 1,0). A segurança exigida depende da aplicação.',
@@ -353,6 +356,62 @@
       .replace('{n}', item.n != null ? item.n : '');
   }
 
+  /* Verbesserungs-Hinweise (Stufe 2): dreisprachige Templates je Code.
+   * Platzhalter werden aus h.v gefuellt. {gov} ist selbst uebersetzt. */
+  var HINT = {
+    FIX_SP: {
+      de: 'S_P (Flächenpressung): Auflagefläche vergrößern — Auflagedurchmesser d_w von {dwNow} auf mind. {dw} mm (z. B. Unterlegscheibe/Bundkopf), oder härteres Material (p_G ≥ {pg} N/mm²), oder Vorspannung senken. Maßgeblich: {gov}.',
+      en: 'S_P (surface pressure): enlarge the bearing area — head diameter d_w from {dwNow} to at least {dw} mm (e.g. a washer/flanged head), or a harder material (p_G ≥ {pg} N/mm²), or lower the preload. Governing state: {gov}.',
+      pt: 'S_P (pressão superficial): aumentar a área de apoio — diâmetro d_w de {dwNow} para pelo menos {dw} mm (p. ex. anilha/cabeça flangeada), ou material mais duro (p_G ≥ {pg} N/mm²), ou reduzir a pré-tensão. Determinante: {gov}.'
+    },
+    FIX_SA: {
+      de: 'S_A (Einschraubtiefe): vorhandene Einschraubtiefe m_vorh von {mNow} auf mind. {m} mm erhöhen, oder einen festeren Innengewinde-Werkstoff (höheres τ_B/R_m) wählen.',
+      en: 'S_A (engagement): increase the available length of engagement m_vorh from {mNow} to at least {m} mm, or choose a stronger internal-thread material (higher τ_B/R_m).',
+      pt: 'S_A (profundidade de aperto): aumentar m_vorh de {mNow} para pelo menos {m} mm, ou escolher um material de rosca interna mais resistente (τ_B/R_m maior).'
+    },
+    FIX_SG: {
+      de: 'S_G (Gleiten/Reibschluss): Klemmkraft/Vorspannung erhöhen, Reibung in der Trennfuge steigern (µ_T von {muNow} auf ≥ {mu}), mehr Schrauben, oder Querkraft auf ≤ {fq} N begrenzen (jetzt {fqNow} N).',
+      en: 'S_G (slip/friction grip): raise the clamp force/preload, increase interface friction (µ_T from {muNow} to ≥ {mu}), add bolts, or limit the transverse force to ≤ {fq} N (now {fqNow} N).',
+      pt: 'S_G (escorregamento/atrito): aumentar a força de aperto/pré-tensão, aumentar o atrito na junta (µ_T de {muNow} para ≥ {mu}), mais parafusos, ou limitar a força transversal a ≤ {fq} N (agora {fqNow} N).'
+    },
+    FIX_SD: {
+      de: 'S_D (Dauerhaltbarkeit): Ausschlaglast um rund {redPct} % senken (σ_a ≤ {saZul} N/mm²) — kleinere Lastamplitude oder größere/nächstgrößere Schraube.{sg}{surf}',
+      en: 'S_D (fatigue): lower the alternating load by about {redPct}% (σ_a ≤ {saZul} N/mm²) — smaller load amplitude or a larger bolt.{sg}{surf}',
+      pt: 'S_D (fadiga): reduzir a carga alternada em cerca de {redPct}% (σ_a ≤ {saZul} N/mm²) — menor amplitude ou parafuso maior.{sg}{surf}'
+    },
+    FIX_SF: {
+      de: 'S_F (Fließen bei Montage): Vorspannung/Anziehmoment um rund {redPct} % senken, oder eine festere Festigkeitsklasse wählen.',
+      en: 'S_F (yield at assembly): lower the preload/tightening torque by about {redPct}%, or choose a higher property class.',
+      pt: 'S_F (cedência na montagem): reduzir a pré-tensão/binário de aperto em cerca de {redPct}%, ou escolher uma classe de resistência superior.'
+    }
+  };
+  function hintText(h) {
+    var v = h.v || {};
+    var govMap = { Montage: { de: 'Montage', en: 'assembly', pt: 'montagem' }, Betrieb: { de: 'Betrieb', en: 'operation', pt: 'serviço' } };
+    var gov = govMap[v.gov] ? (govMap[v.gov][lang] || govMap[v.gov].de) : (v.gov || '');
+    var sgOpt = '', surfOpt = '';
+    if (h.code === 'FIX_SD') {
+      if (v.canSG) sgOpt = (lang === 'en') ? ' Option: choose SG (rolled after heat treatment).' : (lang === 'pt') ? ' Opção: escolher SG (laminada após TT).' : ' Option: schlussgewalzt (SG) wählen.';
+      if (v.hasSurf) surfOpt = (lang === 'en') ? ' Option: use a plain (non-galvanized/non-HV) bolt.' : (lang === 'pt') ? ' Opção: usar parafuso liso (sem galvanização/HV).' : ' Option: blanke Ausführung (statt feuerverzinkt/HV) wählen.';
+    }
+    var tpl = (HINT[h.code] && (HINT[h.code][lang] || HINT[h.code].de)) || '';
+    return tpl
+      .replace('{dwNow}', v.dwNow != null ? fmt(v.dwNow, 1) : '')
+      .replace('{dw}', v.dw != null ? fmt(v.dw, 1) : '')
+      .replace('{pg}', v.pg != null ? fmt(v.pg, 0) : '')
+      .replace('{gov}', gov)
+      .replace('{mNow}', v.mNow != null ? fmt(v.mNow, 1) : '')
+      .replace('{m}', v.m != null ? fmt(v.m, 1) : '')
+      .replace('{muNow}', v.muNow != null ? fmt(v.muNow, 2) : '')
+      .replace('{mu}', v.mu != null ? fmt(v.mu, 2) : '')
+      .replace('{fqNow}', v.fqNow != null ? fmt(v.fqNow, 0) : '')
+      .replace('{fq}', v.fq != null ? fmt(v.fq, 0) : '')
+      .replace('{redPct}', v.redPct != null ? v.redPct : '')
+      .replace('{saZul}', v.saZul != null ? fmt(v.saZul, 1) : '')
+      .replace('{sg}', sgOpt)
+      .replace('{surf}', surfOpt);
+  }
+
   function applyMessages(items) {
     items.forEach(function (it) {
       var r = fieldRows[it.field]; if (!r) return;
@@ -569,6 +628,16 @@
     // Hinweise: Vorspannungs-Check, Warnungen, Annahmen, Offene Punkte
     var notes = el('div', 'notes');
     notes.appendChild(noteLine(R.preloadOK ? 'assume' : 'warning', R.preloadOK ? '✓' : t('tagWarn'), R.preloadOK ? t('preloadOk') : t('preloadBad')));
+    // Verbesserungs-Hinweise (Stufe 2): gesammelt, wenn Sicherheiten gelb/rot sind
+    if (R.improvements && R.improvements.length) {
+      var fixBox = el('div', 'improve-box');
+      fixBox.appendChild(el('div', 'improve-title', t('improveTitle')));
+      R.improvements.forEach(function (h) {
+        fixBox.appendChild(noteLine(h.level === 'bad' ? 'warning' : 'assume', t('tagFix'), hintText(h)));
+      });
+      fixBox.appendChild(el('div', 'improve-coupling', t('improveCoupling')));
+      notes.appendChild(fixBox);
+    }
     (R.warnings || []).forEach(function (w) { notes.appendChild(noteLine('warning', t('tagWarn'), msgText(w))); });
     (R.notes && R.notes.assumptions || []).forEach(function (a) { notes.appendChild(noteLine('assume', t('tagAssume'), noteText(a))); });
     (R.notes && R.notes.pending || []).forEach(function (p) { notes.appendChild(noteLine('assume', t('tagPending'), noteText(p))); });

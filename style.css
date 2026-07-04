@@ -265,6 +265,12 @@ input.locked { background: var(--line-soft); color: var(--muted); cursor: defaul
 .note-line.assume { color: var(--muted); }
 .note-line .tag { font: 700 10px/1.6 var(--font-num); padding: 0 6px; border-radius: 5px; background: var(--surface); flex: none; height: fit-content; }
 
+.improve-box { border: 1px solid color-mix(in srgb, var(--accent, #3b82f6) 40%, transparent); background: color-mix(in srgb, var(--accent, #3b82f6) 7%, transparent); border-radius: var(--radius-sm); padding: 10px 11px; display: grid; gap: 7px; }
+.improve-title { font-weight: 700; font-size: 12.5px; }
+.improve-box .note-line { border: none; padding: 4px 0; background: none; }
+.improve-coupling { font-size: 11.5px; color: var(--muted); font-style: italic; }
+@media print { .improve-box { border: 1px solid #bbb; background: none; } }
+
 .viz-placeholder {
   display: grid; place-items: center; gap: 8px; min-height: 180px;
   border: 1px dashed var(--line); border-radius: var(--radius-sm);

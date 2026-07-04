@@ -619,7 +619,7 @@
       var FKQ = requiredClampForce({ F_Qmax: inp.F_Qmax, muT: (inp.muT || muG), qF: qF, M_Ymax: inp.M_Ymax, qM: inp.qM, ra: inp.ra });
       notes.assumptions.push({ code: 'ASSUME_FKR_FORMULA', text: 'Restklemmkraft F_KR = F_Mmin - F_Z - dF_Vth - (1-Phi_en)*F_A' });
       var F_KR = F_Mmin - F_Z - deltaFvth - (1 - PhiEn) * F_A;
-      slip = { F_KQerf: FKQ, F_KR: F_KR, S_G: (F_KR > 0 && FKQ > 0 ? slipSafety({ F_KR: F_KR, F_KQerf: FKQ }) : 0) };
+      slip = { F_KQerf: FKQ, F_KR: F_KR, S_G: (F_KR > 0 && FKQ > 0 ? slipSafety({ F_KR: F_KR, F_KQerf: FKQ }) : 0), muT: (inp.muT || muG), qF: qF, F_Qmax: inp.F_Qmax };
     }
 
     var engagement = null;
@@ -645,7 +645,7 @@
       notes.pending.push({ code: 'PENDING_R11', text: 'Mindesteinschraubtiefe (R11): Es soll eher die Schraube brechen als das Gewinde ausreissen. Fuer den vollstaendigen Nachweis "R11 pruefen" aktivieren und Werkstoffgruppe des Innengewindes, dessen R_m sowie die vorhandene Einschraubtiefe m_vorh angeben. Richtwerte ohne Nachweis: Stahl ~1*d, Guss ~1,4*d, Aluminium ~2*d.' });
     }
 
-    return {
+    var result = {
       status: 'ok', notes: notes, warnings: vr.warnings,
       geometry: g, strength: { Rm: Rm, Rp02: Rp }, muG: muG, muK: muK, alphaA: alphaA, n: n,
       deltaS: deltaS, deltaP: deltaP, deltaP_model: deltaPmodel, tanPhi: tanPhi, DAGr: DAGr, PhiK: PhiK, PhiEn: PhiEn,
@@ -656,6 +656,53 @@
       F_Vmax: F_Vmax, F_Smax: F_Smax, sigma_zmax: os.sigma_zmax, sigma_redB: os.sigma_redB, S_F: os.S_F,
       fatigue: fatigue, pressure: pressure, slip: slip, engagement: engagement
     };
+    result.improvements = improvementHints(result, inp);
+    return result;
+  }
+
+  /* ===== Verbesserungs-Hinweise (Stufe 2) ==================================
+   * Fuer jede Sicherheit < 1,2 (gelb/rot) ein strukturierter Hinweis mit Hebeln
+   * und — wo sauber invertierbar — einem konkreten Zielwert. Ampel-Grenze 1,2.
+   * Rueckgabe: Array von { safety, level:'warn'|'bad', code, v:{...Zielwerte} }.
+   * Die UI uebersetzt code + v dreisprachig. Kopplung: jeder Text traegt den
+   * Zusatz, dass andere Nachweise danach erneut zu pruefen sind (siehe UI). */
+  var SAFE_TARGET = 1.2;
+  function improvementHints(R, inp) {
+    var out = [];
+    function lvl(s) { return s < 1.0 ? 'bad' : 'warn'; }
+    function need(s) { return s != null && isFinite(s) && s < SAFE_TARGET; }
+
+    // S_P Flaechenpressung: A_p um Faktor 1,2/S_P vergroessern -> d_w,erf
+    if (R.pressure && need(R.pressure.S_P)) {
+      var Ap = R.pressure.A_p;
+      var ApErf = Ap * (SAFE_TARGET / R.pressure.S_P);
+      var dwErf = Math.sqrt(ApErf * 4 / Math.PI + inp.d_h * inp.d_h);
+      var pgErf = (inp.p_G || 0) * (SAFE_TARGET / R.pressure.S_P);
+      out.push({ safety: 'S_P', level: lvl(R.pressure.S_P), code: 'FIX_SP', v: { dw: dwErf, dwNow: inp.d_w, pg: pgErf, gov: R.pressure.governing } });
+    }
+    // S_A Einschraubtiefe: m_vorh,erf = 1,2*m_min + m_zu
+    if (R.engagement && need(R.engagement.S_A)) {
+      var mErf = SAFE_TARGET * R.engagement.m_min + R.engagement.m_zu;
+      out.push({ safety: 'S_A', level: lvl(R.engagement.S_A), code: 'FIX_SA', v: { m: mErf, mNow: R.engagement.m_vorh } });
+    }
+    // S_G Reibschluss: mu_T,erf = mu_T*1,2/S_G ; F_Qmax,zul = F_Qmax*S_G/1,2
+    if (R.slip && need(R.slip.S_G)) {
+      var muErf = R.slip.muT * (SAFE_TARGET / R.slip.S_G);
+      var fqZul = R.slip.F_Qmax * (R.slip.S_G / SAFE_TARGET);
+      out.push({ safety: 'S_G', level: lvl(R.slip.S_G), code: 'FIX_SG', v: { mu: muErf, muNow: R.slip.muT, fq: fqZul, fqNow: R.slip.F_Qmax } });
+    }
+    // S_D Dauerfestigkeit: Ausschlaglast um Faktor S_D/1,2 senken; SG/blank als Optionen
+    if (R.fatigue && need(R.fatigue.S_D)) {
+      var saZul = R.fatigue.sigma_a * (R.fatigue.S_D / SAFE_TARGET);
+      out.push({ safety: 'S_D', level: lvl(R.fatigue.S_D), code: 'FIX_SD', v: {
+        redPct: Math.round((1 - R.fatigue.S_D / SAFE_TARGET) * 100), saZul: saZul,
+        canSG: (R.fatigue.finish === 'SV'), hasSurf: (R.fatigue.surfaceFactor != null && R.fatigue.surfaceFactor !== 1) } });
+    }
+    // S_F Fliessen (Montage): Vorspannung/Anziehmoment um Faktor S_F/1,2 senken
+    if (need(R.S_F)) {
+      out.push({ safety: 'S_F', level: lvl(R.S_F), code: 'FIX_SF', v: { redPct: Math.round((1 - R.S_F / SAFE_TARGET) * 100) } });
+    }
+    return out;
   }
 
   /* Liste der Voreinstellungen fuer die Eingabemaske: id, Label, validiert?, Eingaben. */
@@ -677,6 +724,7 @@
     strengthFromCode: strengthFromCode,
     frictionMid: frictionMid,
     boltShearRatio: boltShearRatio,
+    improvementHints: improvementHints,
     boltCompliance: boltCompliance,
     plateComplianceSleeve: plateComplianceSleeve,
     connectionCoeff: connectionCoeff,
