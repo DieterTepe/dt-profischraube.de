@@ -40,6 +40,13 @@
   </div>
   <button type="button" class="btn btn-primary" id="calcBtn" data-i18n="calc">Berechnen</button>
   <button type="button" class="btn btn-ghost" id="resetBtn" data-i18n="reset">Leeren</button>
+  <div class="field-inline dt-file">
+    <input type="text" id="dtLabel" maxlength="40" placeholder="Bezeichnung (optional)" data-i18n-ph="dtLabelPh">
+    <button type="button" class="btn btn-ghost" id="saveBtn" data-i18n="saveCalc">Speichern (.dt)</button>
+    <button type="button" class="btn btn-ghost" id="loadBtn" data-i18n="loadCalc">Laden (.dt)</button>
+    <input type="file" id="dtFile" accept=".dt,.json,application/json" hidden>
+  </div>
+  <span id="dtMsg" class="dt-msg" role="status" aria-live="polite"></span>
   <div class="sb-spacer"></div>
   <label class="adv-toggle"><input type="checkbox" id="advToggle"> <span data-i18n="showAdvanced">Erweiterte Felder anzeigen</span></label>
 </div>

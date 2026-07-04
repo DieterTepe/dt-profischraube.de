@@ -12,6 +12,43 @@
 (function () {
   'use strict';
 
+  /* ------------------------------------------------ .dt-Dateiformat (rein) */
+  /* Speichern/Laden von Berechnungen (Baustein 1, v4.4-Serie):
+   * NUR Eingaben + Kopf als JSON — Ergebnisse werden beim Laden frisch
+   * gerechnet (robust gegen Versionswechsel). Reine Funktionen ohne DOM,
+   * damit test_solver.js den echten Round-Trip prueft (kein Duplikat). */
+  var DT_APP = 'DT-ProfiSchraube';
+  function dtSerialize(input, label, version) {
+    return JSON.stringify({
+      app: DT_APP,
+      version: String(version || ''),
+      created: new Date().toISOString(),
+      label: String(label || ''),
+      input: input
+    }, null, 2);
+  }
+  function dtParse(text) {
+    var obj;
+    try { obj = JSON.parse(String(text)); }
+    catch (e) { return { ok: false, code: 'DT_PARSE' }; }
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return { ok: false, code: 'DT_FORMAT' };
+    if (obj.app !== DT_APP) return { ok: false, code: 'DT_FORMAT' };
+    if (!obj.input || typeof obj.input !== 'object' || Array.isArray(obj.input)) return { ok: false, code: 'DT_FORMAT' };
+    return { ok: true, payload: obj };
+  }
+  function dtFileName(label, date) {
+    var d = (date instanceof Date) ? date : new Date();
+    var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+    var iso = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    var add = String(label || '').trim().replace(/[^\wäöüÄÖÜß.-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 40);
+    return 'Berechnung_' + iso + (add ? '_' + add : '') + '.dt';
+  }
+  /* Node (Testharness): nur die reinen Helfer exportieren, kein DOM-Code. */
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { dtSerialize: dtSerialize, dtParse: dtParse, dtFileName: dtFileName, DT_APP: DT_APP };
+  }
+  if (typeof window === 'undefined') return;
+
   var DATA = window.DTSData, VALID = window.DTSValidate, SOLVER = window.DTSSolver;
   var RECHENWEG = window.DTSRechenweg || null;
   var SCHAUBILD = window.DTSSchaubild || null;
@@ -42,7 +79,11 @@
       na_D: 'keine Wechsel-/Schwelllast (F_Ao/F_Au)', na_P: 'keine Grenzpressung p_G angegeben', na_G: 'keine Querkraft (F_Q) — kein Gleitnachweis nötig', na_A: '„R11 prüfen" nicht aktiviert',
       thrNote: 'Ampel sind Richtwerte (grün ≥ 1,2 · gelb ≥ 1,0 · rot < 1,0). Die erforderliche Sicherheit hängt vom Anwendungsfall ab.',
       preloadOk: 'F_Mmax ≤ F_Mzul (Montagevorspannung zulässig)', preloadBad: 'F_Mmax > F_Mzul — Schraube/Klasse zu klein',
-      options: 'Auswahlmöglichkeiten', allowed: 'Zulässig', usual: 'Üblich', close: 'Schließen', fieldsDe: 'Feldtexte derzeit nur auf Deutsch.', rechenwegTitle: 'Rechenweg', rwHint: 'Jeder Schritt: allgemeine Formel, eingesetzte Werte, Ergebnis.', rwVerified: 'gegen Engine geprüft'
+      options: 'Auswahlmöglichkeiten', allowed: 'Zulässig', usual: 'Üblich', close: 'Schließen', fieldsDe: 'Feldtexte derzeit nur auf Deutsch.', rechenwegTitle: 'Rechenweg', rwHint: 'Jeder Schritt: allgemeine Formel, eingesetzte Werte, Ergebnis.', rwVerified: 'gegen Engine geprüft',
+      saveCalc: 'Speichern (.dt)', loadCalc: 'Laden (.dt)', dtLabelPh: 'Bezeichnung (optional)',
+      dtSaved: 'Gespeichert als {name}', dtLoaded: 'Berechnung geladen — Ergebnis neu gerechnet.',
+      dtLoadedVer: 'Datei aus Version {v} geladen — Eingaben übernommen, Ergebnis neu gerechnet. Bitte Werte kurz prüfen.',
+      dtErrParse: 'Datei konnte nicht gelesen werden (kein gültiges JSON).', dtErrFormat: 'Keine gültige DT-ProfiSchraube-Datei (.dt).'
     },
     en: {
       tagline: 'Bolted joint to VDI 2230 Part 1', loadExample: 'Load example',
@@ -61,7 +102,11 @@
       na_D: 'no fluctuating load (F_Ao/F_Au)', na_P: 'no limit pressure p_G given', na_G: 'no transverse force (F_Q) — no slip check needed', na_A: '“Check R11” not enabled',
       thrNote: 'Indicator colours are guide values (green ≥ 1.2 · amber ≥ 1.0 · red < 1.0). Required safety depends on the application.',
       preloadOk: 'F_Mmax ≤ F_Mzul (assembly preload admissible)', preloadBad: 'F_Mmax > F_Mzul — bolt/class too small',
-      options: 'Options', allowed: 'Allowed', usual: 'Typical', close: 'Close', fieldsDe: 'Field texts are German for now.', rechenwegTitle: 'Calculation path', rwHint: 'Each step: general formula, inserted values, result.', rwVerified: 'checked against engine'
+      options: 'Options', allowed: 'Allowed', usual: 'Typical', close: 'Close', fieldsDe: 'Field texts are German for now.', rechenwegTitle: 'Calculation path', rwHint: 'Each step: general formula, inserted values, result.', rwVerified: 'checked against engine',
+      saveCalc: 'Save (.dt)', loadCalc: 'Load (.dt)', dtLabelPh: 'Label (optional)',
+      dtSaved: 'Saved as {name}', dtLoaded: 'Calculation loaded — result recomputed.',
+      dtLoadedVer: 'File from version {v} loaded — inputs applied, result recomputed. Please review the values.',
+      dtErrParse: 'File could not be read (not valid JSON).', dtErrFormat: 'Not a valid DT-ProfiSchraube file (.dt).'
     },
     pt: {
       tagline: 'União aparafusada conforme VDI 2230 Parte 1', loadExample: 'Carregar exemplo',
@@ -80,7 +125,11 @@
       na_D: 'sem carga alternada (F_Ao/F_Au)', na_P: 'sem pressão limite p_G', na_G: 'sem força transversal (F_Q) — sem verificação de escorregamento', na_A: '“Verificar R11” não ativado',
       thrNote: 'As cores são valores indicativos (verde ≥ 1,2 · amarelo ≥ 1,0 · vermelho < 1,0). A segurança exigida depende da aplicação.',
       preloadOk: 'F_Mmax ≤ F_Mzul (pré-tensão de montagem admissível)', preloadBad: 'F_Mmax > F_Mzul — parafuso/classe pequenos demais',
-      options: 'Opções', allowed: 'Permitido', usual: 'Habitual', close: 'Fechar', fieldsDe: 'Os textos dos campos estão em alemão por agora.', rechenwegTitle: 'Percurso de cálculo', rwHint: 'Cada passo: fórmula geral, valores inseridos, resultado.', rwVerified: 'verificado com o motor'
+      options: 'Opções', allowed: 'Permitido', usual: 'Habitual', close: 'Fechar', fieldsDe: 'Os textos dos campos estão em alemão por agora.', rechenwegTitle: 'Percurso de cálculo', rwHint: 'Cada passo: fórmula geral, valores inseridos, resultado.', rwVerified: 'verificado com o motor',
+      saveCalc: 'Guardar (.dt)', loadCalc: 'Carregar (.dt)', dtLabelPh: 'Designação (opcional)',
+      dtSaved: 'Guardado como {name}', dtLoaded: 'Cálculo carregado — resultado recalculado.',
+      dtLoadedVer: 'Ficheiro da versão {v} carregado — entradas aplicadas, resultado recalculado. Verifique os valores.',
+      dtErrParse: 'Não foi possível ler o ficheiro (JSON inválido).', dtErrFormat: 'Ficheiro DT-ProfiSchraube (.dt) inválido.'
     }
   };
   var GROUP_ORDER = ['Schraube', 'Anziehen', 'Geometrie', 'Belastung', 'Setzen', 'Nachweise'];
@@ -735,6 +784,48 @@
     liveValidate();
   }
 
+  /* -------------------------------------------------- Speichern/Laden (.dt) */
+  var dtMsgTimer = null;
+  function dtMsg(kind, text) {
+    var el = $('dtMsg'); if (!el) return;
+    el.textContent = text; el.className = 'dt-msg ' + kind;
+    if (dtMsgTimer) clearTimeout(dtMsgTimer);
+    dtMsgTimer = setTimeout(function () { el.textContent = ''; el.className = 'dt-msg'; }, 8000);
+  }
+  function saveDT() {
+    var labelEl = $('dtLabel');
+    var label = labelEl ? labelEl.value : '';
+    var json = dtSerialize(collectInputs(), label, SOLVER.VERSION);
+    var name = dtFileName(label, new Date());
+    var blob = new Blob([json], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    dtMsg('ok', t('dtSaved').replace('{name}', name));
+  }
+  function loadDTText(text) {
+    var res = dtParse(text);
+    if (!res.ok) { dtMsg('err', t(res.code === 'DT_PARSE' ? 'dtErrParse' : 'dtErrFormat')); return; }
+    var p = res.payload;
+    /* Identisch zum Preset-Mechanismus: leeren, fuellen, pruefen, rechnen. */
+    Object.keys(fieldEls).forEach(function (k) { ctrlClear(k); });
+    Object.keys(p.input).forEach(function (k) { if (fieldEls[k] != null) ctrlSet(k, p.input[k]); });
+    var labelEl = $('dtLabel'); if (labelEl) labelEl.value = p.label || '';
+    markCustomPreset();
+    liveValidate();
+    compute();
+    if (p.version && p.version !== SOLVER.VERSION) dtMsg('warn', t('dtLoadedVer').replace('{v}', p.version));
+    else dtMsg('ok', t('dtLoaded'));
+  }
+  function loadDTFile(file) {
+    var r = new FileReader();
+    r.onload = function () { loadDTText(String(r.result)); };
+    r.onerror = function () { dtMsg('err', t('dtErrParse')); };
+    r.readAsText(file);
+  }
+
   /* ----------------------------------------------------------- Sprache/Theme */
   function snapshotForm() { var s = {}; Object.keys(fieldEls).forEach(function (k) { s[k] = ctrlGet(k); }); return s; }
   function restoreForm(s) { Object.keys(fieldEls).forEach(function (k) { if (s[k] !== undefined && fieldEls[k]) ctrlSet(k, s[k]); }); }
@@ -745,6 +836,8 @@
     if (hadForm) { buildForm(); restoreForm(snap); }   // Feldtexte/Optionen in neuer Sprache, Werte bleiben
     var nodes = document.querySelectorAll('[data-i18n]');
     for (var i = 0; i < nodes.length; i++) { var key = nodes[i].getAttribute('data-i18n'); nodes[i].textContent = t(key); }
+    var phs = document.querySelectorAll('[data-i18n-ph]');
+    for (var q = 0; q < phs.length; q++) phs[q].setAttribute('placeholder', t(phs[q].getAttribute('data-i18n-ph')));
     // Presetliste (customOpt) + Empfehlungs-Suffix neu, ohne Auswahl zu verlieren
     var cur = $('presetSel').value; fillPresetSelect(); $('presetSel').value = cur;
     var btns = document.querySelectorAll('#langSwitch .lang-btn');
@@ -778,6 +871,9 @@
     on('resetBtn', 'click', resetForm);
     on('advToggle', 'change', function () { document.body.classList.toggle('show-adv', this.checked); });
     on('presetSel', 'change', function () { if (this.value) loadPreset(this.value); });
+    on('saveBtn', 'click', saveDT);
+    on('loadBtn', 'click', function () { var f = $('dtFile'); if (f) f.click(); });
+    on('dtFile', 'change', function () { if (this.files && this.files[0]) loadDTFile(this.files[0]); this.value = ''; });
 
     // Startbeispiel laden (validiertes M12-Beispiel), damit sofort etwas Sinnvolles steht
     var list = SOLVER.listPresets();
