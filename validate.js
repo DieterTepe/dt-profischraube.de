@@ -308,13 +308,49 @@
         pt: 'Menor valor da força axial variável. 0 para carga pulsante pura. Valores negativos (carga alternada) são permitidos, mas devem ser menores do que F_Ao.'
       }
     },
+    flangeAssist: {
+      label: { de: 'Flansch-Assistent (F_Qmax aus Drehmoment)', en: 'Flange assistant (F_Qmax from torque)', pt: 'Assistente de flange (F_Qmax a partir do momento)' },
+      group: 'Belastung', type: 'bool', advanced: true, diagram: null,
+      help: {
+        de: 'Fuer Flanschverbindungen mit einem Drehmoment M_T um die Flanschachse (Getriebe-, Rohr-, Kupplungsflansche). Statt die Querkraft je Schraube selbst auszurechnen, gibst du das Gesamtmoment M_T, die Schraubenzahl z und den Lochkreisradius r_LK ein; das Programm rechnet die Umfangskraft F_Qmax = M_T/(z*r_LK) je Schraube und fuehrt damit den Gleitnachweis (R12). Aktiv wird das Feld Querkraft F_Qmax gesperrt und automatisch gefuellt. Annahme: gleichmaessige Lastaufteilung auf alle Schrauben.',
+        en: 'For flange joints with a torque M_T about the flange axis (gearbox, pipe, coupling flanges). Instead of computing the transverse force per bolt yourself, enter the total torque M_T, the bolt count z and the bolt-circle radius r_LK; the program computes the circumferential force F_Qmax = M_T/(z·r_LK) per bolt and runs the slip check (R12) with it. When active, the transverse-force field F_Qmax is locked and auto-filled. Assumption: uniform load sharing across all bolts.',
+        pt: 'Para juntas de flange com um momento M_T em torno do eixo do flange (flanges de caixa, tubo, acoplamento). Em vez de calcular a força transversal por parafuso, introduza o momento total M_T, o número de parafusos z e o raio do círculo de furos r_LK; o programa calcula a força circunferencial F_Qmax = M_T/(z·r_LK) por parafuso e executa a verificação ao escorregamento (R12). Quando ativo, o campo da força transversal F_Qmax é bloqueado e preenchido automaticamente. Pressuposto: distribuição uniforme da carga por todos os parafusos.'
+      }
+    },
+    M_T: {
+      label: { de: 'Gesamt-Drehmoment M_T', en: 'Total torque M_T', pt: 'Momento total M_T' },
+      group: 'Belastung', type: 'number', unit: 'N·mm', min: 0, max: 1e10, advanced: true, diagram: null, dependsOn: 'flangeAssist',
+      help: {
+        de: 'Das gesamte um die Flanschachse wirkende Drehmoment, das der Schraubenkranz uebertragen muss (z. B. das Wellenmoment an einem Getriebeflansch). Einheit N*mm: ein Moment in N*m mit 1000 multiplizieren (z. B. 500 N*m = 500000 N*mm).',
+        en: 'The total torque about the flange axis that the bolt circle must transmit (e.g. the shaft torque at a gearbox flange). Unit N·mm: multiply a torque in N·m by 1000 (e.g. 500 N·m = 500,000 N·mm).',
+        pt: 'O momento total em torno do eixo do flange que o círculo de parafusos deve transmitir (p. ex. o momento do veio num flange de caixa). Unidade N·mm: multiplique um momento em N·m por 1000 (p. ex. 500 N·m = 500 000 N·mm).'
+      }
+    },
+    z_bolts: {
+      label: { de: 'Schraubenzahl z', en: 'Bolt count z', pt: 'Número de parafusos z' },
+      group: 'Belastung', type: 'number', unit: '-', min: 1, max: 200, warnMax: 60, decimals: 0, advanced: true, diagram: null, dependsOn: 'flangeAssist',
+      help: {
+        de: 'Anzahl der Schrauben im Flansch-Lochkreis, die sich das Drehmoment teilen. Das Tool rechnet einen Nachweis fuer eine einzelne, gleichmaessig belastete Schraube.',
+        en: 'Number of bolts in the flange bolt circle that share the torque. The tool computes a check for a single, uniformly loaded bolt.',
+        pt: 'Número de parafusos no círculo do flange que partilham o momento. A ferramenta calcula a verificação para um único parafuso com carga uniforme.'
+      }
+    },
+    r_LK: {
+      label: { de: 'Lochkreisradius r_LK', en: 'Bolt-circle radius r_LK', pt: 'Raio do círculo de furos r_LK' },
+      group: 'Belastung', type: 'number', unit: 'mm', min: 1, max: 5000, decimals: 1, advanced: true, diagram: null, dependsOn: 'flangeAssist',
+      help: {
+        de: 'Radius vom Flanschmittelpunkt bis zur Schraubenachse (halber Lochkreisdurchmesser). Bestimmt den Hebelarm: groesserer Radius -> kleinere Umfangskraft je Schraube.',
+        en: 'Radius from the flange centre to the bolt axis (half the bolt-circle diameter). Sets the lever arm: larger radius → smaller circumferential force per bolt.',
+        pt: 'Raio do centro do flange até ao eixo do parafuso (metade do diâmetro do círculo de furos). Define o braço: raio maior → força circunferencial menor por parafuso.'
+      }
+    },
     F_Qmax: {
       label: { de: 'Querkraft F_Qmax', en: 'Transverse force F_Qmax', pt: 'Força transversal F_Qmax' },
       group: 'Belastung', type: 'number', unit: 'N', min: 0, max: 1e8, diagram: 'querkraft',
       help: {
-        de: 'Quer zur Schraubenachse wirkende Kraft, die ueber Reibung in der Trennfuge uebertragen wird. Erfordert ausreichende Klemmkraft (Gleitnachweis).',
-        en: 'Force perpendicular to the bolt axis, transmitted by friction in the interface. Requires sufficient clamp force (slip check).',
-        pt: 'Força perpendicular ao eixo do parafuso, transmitida por atrito na junta. Requer força de aperto suficiente (verificação ao escorregamento).'
+        de: 'Quer zur Schraubenachse wirkende Kraft, die ueber Reibung in der Trennfuge uebertragen wird. Erfordert ausreichende Klemmkraft (Gleitnachweis). Ist der Flansch-Assistent aktiv, wird dieses Feld automatisch aus M_T/(z*r_LK) gefuellt und gesperrt.',
+        en: 'Force perpendicular to the bolt axis, transmitted by friction in the interface. Requires sufficient clamp force (slip check). If the flange assistant is active, this field is auto-filled from M_T/(z·r_LK) and locked.',
+        pt: 'Força perpendicular ao eixo do parafuso, transmitida por atrito na junta. Requer força de aperto suficiente (verificação ao escorregamento). Com o assistente de flange ativo, este campo é preenchido automaticamente a partir de M_T/(z·r_LK) e bloqueado.'
       }
     },
     muT: {
@@ -672,6 +708,14 @@
       var apDerivable = num(inp.alpha_P) || (present(inp.plateMat) && DATA.TAU_RATIO[inp.plateMat] && DATA.TAU_RATIO[inp.plateMat].alpha != null);
       if (!apDerivable) err('alpha_P', 'THERMAL_ALPHA_P_MISSING', 'Der Thermik-Assistent ist aktiv, aber alpha_P der verspannten Teile fehlt. Entweder einen Plattenwerkstoff waehlen (belegt alpha_P automatisch) oder alpha_P direkt eingeben (in 10^-6/K, z. B. Alu ~23).');
       if (num(inp.dT) && inp.dT === 0) warn('dT', 'THERMAL_DT_ZERO', 'dT = 0: Der Thermik-Assistent liefert dF_Vth = 0 (kein Temperatureinfluss).');
+    }
+
+    /* 9) Flansch-Assistent: braucht M_T, z und r_LK, um F_Qmax = M_T/(z*r_LK) zu bilden. */
+    if (inp.flangeAssist === true) {
+      if (!num(inp.M_T)) err('M_T', 'FLANGE_MT_MISSING', 'Der Flansch-Assistent ist aktiv, aber das Gesamt-Drehmoment M_T fehlt (in N*mm; ein Moment in N*m mit 1000 multiplizieren).');
+      if (!num(inp.z_bolts) || inp.z_bolts < 1) err('z_bolts', 'FLANGE_Z_MISSING', 'Der Flansch-Assistent ist aktiv, aber die Schraubenzahl z (>= 1) fehlt.');
+      if (!num(inp.r_LK) || inp.r_LK <= 0) err('r_LK', 'FLANGE_R_MISSING', 'Der Flansch-Assistent ist aktiv, aber der Lochkreisradius r_LK (> 0) fehlt.');
+      if (num(inp.M_T) && inp.M_T === 0) warn('M_T', 'FLANGE_MT_ZERO', 'M_T = 0: Der Flansch-Assistent liefert F_Qmax = 0 (keine Querkraft aus Drehmoment).');
     }
 
     return { ok: errors.length === 0, errors: errors, warnings: warnings };

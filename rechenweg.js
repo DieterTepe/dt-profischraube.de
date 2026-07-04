@@ -516,17 +516,40 @@
     }
 
     /* ---- R12: Gleiten/Reibschluss (nur bei Querkraft) ---- */
-    if (R.slip && inp.F_Qmax != null && inp.F_Qmax > 0) {
+    if (R.slip) {
       var muT = (inp.muT != null) ? inp.muT : muG;
       var qF = (inp.qF != null) ? inp.qF : 1;
-      var FKQ = inp.F_Qmax / (qF * muT);
+      /* F_Qmax bevorzugt aus dem Engine-Ergebnis: bei aktivem Flansch-Assistenten
+       * trägt das Original-inp kein F_Qmax (der Solver bildet es aus M_T/z/r_LK). */
+      var F_Qeff = (R.slip.F_Qmax != null) ? R.slip.F_Qmax : (inp.F_Qmax || 0);
+
+      /* ---- R12a: Umfangskraft je Schraube aus dem Flansch-Drehmoment ---- */
+      if (R.flange) {
+        var fl = R.flange;
+        step({
+          id: 'FQflange', phase: 'R12',
+          titleI: { de: 'Umfangskraft je Schraube F_Qmax (Flansch)', en: 'Circumferential force per bolt F_Qmax (flange)', pt: 'Força circunferencial por parafuso F_Qmax (flange)' },
+          formula: 'F_Qmax = M_T / (z · r_LK)',
+          sub: 'F_Qmax = ' + nf(fl.M_T, 0) + ' / (' + nf(fl.z, 0) + ' · ' + nf(fl.r_LK, 1) + ')',
+          result: nf(fl.F_Qmax, 0) + ' N',
+          _val: fl.F_Qmax, _exp: R.slip.F_Qmax,
+          noteI: {
+            de: 'Das Flansch-Drehmoment wird gleichmäßig auf alle Schrauben am Lochkreis aufgeteilt; jede trägt diese Umfangskraft.',
+            en: 'The flange torque is shared uniformly by all bolts on the bolt circle; each carries this circumferential force.',
+            pt: 'O momento do flange é repartido uniformemente por todos os parafusos do círculo; cada um suporta esta força circunferencial.'
+          },
+          ref: 'VDI 2230 Bl.1 · R12'
+        });
+      }
+
+      var FKQ = F_Qeff / (qF * muT);
       var momTerm = (inp.M_Ymax != null && inp.M_Ymax > 0 && inp.qM >= 1 && inp.ra > 0) ? inp.M_Ymax / (inp.qM * inp.ra * muT) : 0;
       FKQ += momTerm;
       step({
         id: 'FKQ', phase: 'R12',
         titleI: { de: 'Erforderliche Klemmkraft F_KQ,erf', en: 'Required clamp force F_KQ,req', pt: 'Força de aperto necessária F_KQ,req' },
         formula: 'F_KQ,erf = F_Qmax / (q_F·μ_T)' + (momTerm > 0 ? ' + M_Ymax/(q_M·r_a·μ_T)' : ''),
-        sub: 'F_KQ,erf = ' + nf(inp.F_Qmax, 0) + ' / (' + nf(qF, 0) + '·' + nf(muT, 3) + ')',
+        sub: 'F_KQ,erf = ' + nf(F_Qeff, 0) + ' / (' + nf(qF, 0) + '·' + nf(muT, 3) + ')',
         result: nf(FKQ, 0) + ' N',
         _val: FKQ, _exp: R.slip.F_KQerf,
         noteI: { de: 'Klemmkraft, die nötig ist, um die Querkraft per Reibung zu übertragen.', en: 'Clamp force needed to transmit the transverse force by friction.', pt: 'Força de aperto necessária para transmitir a força transversal por atrito.' },

@@ -341,6 +341,20 @@
         rz: 'Rz10-40', seats: 2, interfaces: 1
       }
     },
+    'getriebeflansch_m16': {
+      label: 'Getriebeflansch M16 10.9 (Flansch-Assistent: M_T = 6000 N·m auf 8 Schrauben)',
+      quelle: 'illustratives Testbeispiel (nicht normvalidiert; F_Qmax = M_T/(z·r_LK), speist R12)',
+      illustrativ: true,
+      input: {
+        size: 'M16', strengthClass: '10.9', frictionClass: 'B',
+        tightening: 'drehmomentgesteuert', connection: 'DSV', n: 0.5,
+        lShank: 28, lThreadFree: 12,
+        l_K: 40, d_w: 24, d_h: 17.5, D_A: 60, E_P: 210000, p_G: 700,
+        F_Kerf: 20000, F_A: 8000, muT: 0.20, qF: 1,
+        flangeAssist: true, M_T: 6000000, z_bolts: 8, r_LK: 120,
+        rz: 'Rz10-40', seats: 2, interfaces: 1
+      }
+    },
     'alu_flansch_dT': {
       label: 'Alu-Flansch M12 8.8 mit Temperaturhub (Thermik-Assistent, dT = −40 K)',
       quelle: 'illustratives Testbeispiel (nicht normvalidiert; VDI-Naeherung dF_Vth = l_K*(a_S−a_P)*dT/(d_S+d_P), E(T) konstant)',

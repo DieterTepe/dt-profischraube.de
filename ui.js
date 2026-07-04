@@ -84,7 +84,8 @@
       dtSaved: 'Gespeichert als {name}', dtLoaded: 'Berechnung geladen — Ergebnis neu gerechnet.',
       dtLoadedVer: 'Datei aus Version {v} geladen — Eingaben übernommen, Ergebnis neu gerechnet. Bitte Werte kurz prüfen.',
       dtErrParse: 'Datei konnte nicht gelesen werden (kein gültiges JSON).', dtErrFormat: 'Keine gültige DT-ProfiSchraube-Datei (.dt).',
-      thermalProv: 'aus Thermik-Assistent (ΔT)'
+      thermalProv: 'aus Thermik-Assistent (ΔT)',
+      flangeProv: 'aus Flansch-Assistent (M_T/z/r_LK)'
     },
     en: {
       tagline: 'Bolted joint to VDI 2230 Part 1', loadExample: 'Load example',
@@ -108,7 +109,8 @@
       dtSaved: 'Saved as {name}', dtLoaded: 'Calculation loaded — result recomputed.',
       dtLoadedVer: 'File from version {v} loaded — inputs applied, result recomputed. Please review the values.',
       dtErrParse: 'File could not be read (not valid JSON).', dtErrFormat: 'Not a valid DT-ProfiSchraube file (.dt).',
-      thermalProv: 'from thermal assistant (ΔT)'
+      thermalProv: 'from thermal assistant (ΔT)',
+      flangeProv: 'from flange assistant (M_T/z/r_LK)'
     },
     pt: {
       tagline: 'União aparafusada conforme VDI 2230 Parte 1', loadExample: 'Carregar exemplo',
@@ -132,7 +134,8 @@
       dtSaved: 'Guardado como {name}', dtLoaded: 'Cálculo carregado — resultado recalculado.',
       dtLoadedVer: 'Ficheiro da versão {v} carregado — entradas aplicadas, resultado recalculado. Verifique os valores.',
       dtErrParse: 'Não foi possível ler o ficheiro (JSON inválido).', dtErrFormat: 'Ficheiro DT-ProfiSchraube (.dt) inválido.',
-      thermalProv: 'do assistente térmico (ΔT)'
+      thermalProv: 'do assistente térmico (ΔT)',
+      flangeProv: 'do assistente de flange (M_T/z/r_LK)'
     }
   };
   var GROUP_ORDER = ['Schraube', 'Anziehen', 'Geometrie', 'Belastung', 'Setzen', 'Nachweise'];
@@ -341,6 +344,10 @@
     THERMAL_DT_MISSING: { en: 'The thermal assistant is active but the temperature change ΔT is missing. Heating positive, cooling negative (e.g. assembly 20 °C, operation −20 °C → ΔT = −40 K).', pt: 'O assistente térmico está ativo mas falta a variação de temperatura ΔT. Aquecimento positivo, arrefecimento negativo (p. ex. montagem 20 °C, serviço −20 °C → ΔT = −40 K).' },
     THERMAL_ALPHA_P_MISSING: { en: 'The thermal assistant is active but α_P of the clamped parts is missing. Either choose a plate material (fills α_P automatically) or enter α_P directly (in 10⁻⁶/K, e.g. aluminium ~23).', pt: 'O assistente térmico está ativo mas falta α_P das peças apertadas. Escolha um material das peças (preenche α_P automaticamente) ou introduza α_P diretamente (em 10⁻⁶/K, p. ex. alumínio ~23).' },
     THERMAL_DT_ZERO: { en: 'ΔT = 0: the thermal assistant yields ΔF_Vth = 0 (no temperature influence).', pt: 'ΔT = 0: o assistente térmico resulta em ΔF_Vth = 0 (sem influência da temperatura).' },
+    FLANGE_MT_MISSING: { en: 'The flange assistant is active but the total torque M_T is missing (in N·mm; multiply a torque in N·m by 1000).', pt: 'O assistente de flange está ativo mas falta o momento total M_T (em N·mm; multiplique um momento em N·m por 1000).' },
+    FLANGE_Z_MISSING: { en: 'The flange assistant is active but the bolt count z (≥ 1) is missing.', pt: 'O assistente de flange está ativo mas falta o número de parafusos z (≥ 1).' },
+    FLANGE_R_MISSING: { en: 'The flange assistant is active but the bolt-circle radius r_LK (> 0) is missing.', pt: 'O assistente de flange está ativo mas falta o raio do círculo de furos r_LK (> 0).' },
+    FLANGE_MT_ZERO: { en: 'M_T = 0: the flange assistant yields F_Qmax = 0 (no transverse force from torque).', pt: 'M_T = 0: o assistente de flange resulta em F_Qmax = 0 (sem força transversal do momento).' },
     REQUIRED: { en: '{label} is required.', pt: '{label} é obrigatório.' },
     ENUM_INVALID: { en: '{label}: invalid value. Allowed: {opts}.', pt: '{label}: valor inválido. Permitido: {opts}.' },
     NOT_A_NUMBER: { en: '{label} must be a number.', pt: '{label} deve ser um número.' },
@@ -391,6 +398,7 @@
     ASSUME_SP_OPERATING: { en: 'R10: operating state governs (p_max from F_Smax > F_Mzul); S_P = min(assembly, operation).', pt: 'R10: estado de serviço determinante (p_max de F_Smax > F_Mzul); S_P = mín(montagem, serviço).' },
     ASSUME_FKR_FORMULA: { en: 'Residual clamp force F_KR = F_Mmin − F_Z − max(0; ΔF_Vth) − (1−Φ_en)·F_A (preload gain not credited).', pt: 'Força de aperto residual F_KR = F_Mmin − F_Z − max(0; ΔF_Vth) − (1−Φ_en)·F_A (ganho de pré-tensão não creditado).' },
     ASSUME_THERMAL_APPROX: { en: 'Thermal (VDI approximation): ΔF_Vth = l_K·(α_S − α_P)·ΔT/(δ_S + δ_P). Temperature dependence of the elastic moduli NOT included.', pt: 'Térmico (aproximação VDI): ΔF_Vth = l_K·(α_S − α_P)·ΔT/(δ_S + δ_P). Dependência dos módulos E com a temperatura NÃO incluída.' },
+    ASSUME_FLANGE_FQ: { en: 'Flange assistant: F_Qmax = M_T/(z·r_LK) per bolt (uniform load sharing across all bolts on the bolt circle).', pt: 'Assistente de flange: F_Qmax = M_T/(z·r_LK) por parafuso (distribuição uniforme da carga por todos os parafusos do círculo).' },
     ASSUME_ALPHA_S_CLASS: { en: 'α_S taken from the property class (guide value 20–100 °C: bolt steel ~11.5, austenitic ~16, in 10⁻⁶/K).', pt: 'α_S obtido da classe de resistência (valor indicativo 20–100 °C: aço ~11,5, austenítico ~16, em 10⁻⁶/K).' },
     ASSUME_ALPHA_P_MAT: { en: 'α_P taken from the plate material (guide value 20–100 °C, in 10⁻⁶/K).', pt: 'α_P obtido do material das peças (valor indicativo 20–100 °C, em 10⁻⁶/K).' },
     HINT_DFVTH_GAIN: { en: 'ΔF_Vth is a preload GAIN (hot state). Not credited for F_Mmin/F_KR (cold state governs); in F_Smax/F_Vmax it increases bolt force and surface pressure.', pt: 'ΔF_Vth é um GANHO de pré-tensão (estado quente). Não creditado em F_Mmin/F_KR (estado frio determinante); em F_Smax/F_Vmax aumenta a força do parafuso e a pressão superficial.' },
@@ -520,6 +528,7 @@
     fillFromMaterial('plateMat', 'alpha_P', 'apCustom', 'alpha', '10⁻⁶/K');
     fillAlphaS();
     updateThermalLock();
+    updateFlangeLock();
   }
   /* alpha_S aus der Festigkeitsklasse vorbelegen/sperren (Stahl ~11,5 · Austenit ~16),
    * gleiches Muster wie fillFromMaterial, Quelle ist aber STRENGTH + BOLT_ALPHA. */
@@ -549,6 +558,21 @@
     if (assist && assist.checked) {
       tgt.readOnly = true; tgt.classList.add('locked');
       if (hintEl) hintEl.textContent = t('rmHintPrefix') + ': ' + t('thermalProv');
+    } else {
+      tgt.readOnly = false; tgt.classList.remove('locked');
+      if (hintEl) hintEl.textContent = '';
+    }
+  }
+  /* Flansch-Assistent: ist er aktiv, wird das manuelle F_Qmax gesperrt +
+   * mit Provenienz beschriftet; der Wert wird nach jeder Berechnung aus der
+   * Engine eingetragen (compute). Gleiches Muster wie updateThermalLock. */
+  function updateFlangeLock() {
+    var assist = fieldEls['flangeAssist'], tgt = fieldEls['F_Qmax'];
+    var row = fieldRows['F_Qmax']; if (!tgt || !row) return;
+    var hintEl = row.querySelector('.field-hint');
+    if (assist && assist.checked) {
+      tgt.readOnly = true; tgt.classList.add('locked');
+      if (hintEl) hintEl.textContent = t('rmHintPrefix') + ': ' + t('flangeProv');
     } else {
       tgt.readOnly = false; tgt.classList.remove('locked');
       if (hintEl) hintEl.textContent = '';
@@ -601,6 +625,7 @@
     /* Provenienz: bei aktivem Thermik-Assistenten den berechneten dF_Vth ins
      * gesperrte Feld eintragen, damit der Wert sichtbar (und in .dt gesichert) ist. */
     if (R.thermal && fieldEls['deltaFvth']) fieldEls['deltaFvth'].value = Math.round(R.deltaFvth);
+    if (R.flange && fieldEls['F_Qmax']) fieldEls['F_Qmax'].value = Math.round(R.flange.F_Qmax);
     renderResults(R);
   }
 

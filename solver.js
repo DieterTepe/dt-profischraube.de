@@ -296,6 +296,18 @@
     return pG / pMax;
   }
 
+  /* ===== Flansch-Assistent: Umfangskraft je Schraube ======================
+   * Ein Drehmoment M_T [N*mm] um die Flanschachse wird von z Schrauben am
+   * Lochkreisradius r_LK [mm] durch Umfangskraefte uebertragen. Bei gleichmaessiger
+   * Aufteilung traegt jede Schraube F_Qmax = M_T/(z*r_LK). Reiner UX-Wrapper fuer
+   * R12 — keine neue Physik. Als Node-Helfer exportiert und einzeln getestet. */
+  function flangeShear(cfg) {
+    if (!(cfg.M_T >= 0)) throw new Error('flangeShear: M_T muss >= 0 sein');
+    if (!(cfg.z >= 1)) throw new Error('flangeShear: Schraubenzahl z muss >= 1 sein');
+    if (!(cfg.r_LK > 0)) throw new Error('flangeShear: Lochkreisradius r_LK muss > 0 sein');
+    return { F_Qmax: cfg.M_T / (cfg.z * cfg.r_LK), M_T: cfg.M_T, z: cfg.z, r_LK: cfg.r_LK };
+  }
+
   /* ===== R12: Gleiten & Abscheren ========================================
    * Reibschluss: F_KQerf = F_Qmax/(q_F*mu_T) + M_Ymax/(q_M*r_a*mu_T); S_G = F_KR/F_KQerf
    * Abscheren: tau_max = F_Qmax/A; tau_B = factor*R_m (factor ~0.6, validate); S_A = tau_B/tau_max */
@@ -486,6 +498,19 @@
     var vr = validateInput ? validateInput(inp) : { ok: true, errors: [], warnings: [] };
     if (!vr.ok) {
       return { status: 'invalid', errors: vr.errors, warnings: vr.warnings, notes: notes };
+    }
+    /* Flansch-Assistent (Baustein 3, v4.4-Serie): reiner UX-Wrapper um R12.
+     * Nutzer gibt Gesamt-Drehmoment M_T, Schraubenzahl z und Lochkreisradius r_LK;
+     * die Umfangskraft je Schraube F_Qmax = M_T/(z*r_LK) wird berechnet und in die
+     * bestehende, seit v4.1.0 getestete Querkraft-Kette (R12) eingespeist. KEINE
+     * neue Physik. Aktiv ueberschreibt der Assistent ein evtl. manuelles F_Qmax
+     * (die UI sperrt es ohnehin). inp wird flach kopiert, Original bleibt unberuehrt. */
+    var flange = null;
+    if (inp.flangeAssist === true) {
+      var fs = flangeShear({ M_T: inp.M_T, z: inp.z_bolts, r_LK: inp.r_LK });
+      inp = Object.assign({}, inp, { F_Qmax: fs.F_Qmax });
+      flange = { M_T: fs.M_T, z: fs.z, r_LK: fs.r_LK, F_Qmax: fs.F_Qmax };
+      notes.assumptions.push({ code: 'ASSUME_FLANGE_FQ', text: 'Flansch-Assistent: F_Qmax = M_T/(z*r_LK) = ' + Math.round(fs.F_Qmax) + ' N je Schraube (gleichmaessige Lastaufteilung auf ' + fs.z + ' Schrauben am Lochkreisradius ' + fs.r_LK + ' mm).' });
     }
     var g = inp.size ? forSize(inp.size) : threadGeometry(inp.d, inp.P);
     var s = strength(inp.strengthClass);
@@ -681,7 +706,7 @@
       F_Mmin: F_Mmin, F_Mmax: F_Mmax, F_Mzul: F_Mzul, preloadOK: preloadOK,
       M_A: torque.M_A, M_G: torque.M_G, M_K: torque.M_K,
       F_Vmax: F_Vmax, F_Smax: F_Smax, sigma_zmax: os.sigma_zmax, sigma_redB: os.sigma_redB, S_F: os.S_F,
-      fatigue: fatigue, pressure: pressure, slip: slip, engagement: engagement
+      fatigue: fatigue, pressure: pressure, slip: slip, engagement: engagement, flange: flange
     };
     result.improvements = improvementHints(result, inp);
     return result;
@@ -782,6 +807,7 @@
     bearingPressure: bearingPressure,
     surfacePressureSafety: surfacePressureSafety,
     requiredClampForce: requiredClampForce,
+    flangeShear: flangeShear,
     slipSafety: slipSafety,
     shearStress: shearStress,
     shearStrength: shearStrength,
