@@ -505,11 +505,17 @@
     row('F_Mzul', fmt(R.F_Mzul, 0) + unit('N'));
     row('M_A', fmt(R.M_A / 1000, 1) + unit('N·m'));
     row('F_Smax', fmt(R.F_Smax, 0) + unit('N'));
+    // Schrauben-E-Modul nur zeigen, wenn er vom Stahl-Standard abweicht (z. B. rostfrei ~200 GPa)
+    if (R.E_S != null && R.E_S !== 205000) row('E_S', fmt(R.E_S, 0) + unit('N/mm²'));
     row('σ_z,max', fmt(R.sigma_zmax, 0) + unit('N/mm²'));
     row('σ_red,B', fmt(R.sigma_redB, 0) + unit('N/mm²'));
+    // Dauerfestigkeit: Ausschlagspannung + ertragbare Spannung immer zeigen, wenn Schwinglast gerechnet
+    if (R.fatigue) {
+      row('σ_a', fmt(R.fatigue.sigma_a, 1) + unit('N/mm²'));
+      row('σ_A (' + R.fatigue.finish + ')', fmt(R.fatigue.sigma_A, 1) + unit('N/mm²'));
+    }
     // SG-Dauerfestigkeit: mittlere Schraubenkraft-Verhaeltnis, falls aktiv
     if (R.fatigue && R.fatigue.finish === 'SG' && R.fatigue.sgRatio != null) {
-      row('σ_A (SG)', fmt(R.fatigue.sigma_A, 1) + unit('N/mm²'));
       row('F_Sm/F_0,2min', fmt(R.fatigue.sgRatio, 3));
     }
     // Dauerfestigkeits-Ausführung / Oberflächen-Abminderung, falls wirksam
@@ -523,6 +529,11 @@
     if (R.pressure && R.pressure.p_max_M != null && R.pressure.p_max_B != null) {
       row('p_max (Montage)', fmt(R.pressure.p_max_M, 0) + unit('N/mm²'));
       row('p_max (Betrieb)', fmt(R.pressure.p_max_B, 0) + unit('N/mm²'));
+    }
+    // R12 Reibschluss: Kennwerte zeigen, wenn eine Querkraft vorliegt
+    if (R.slip && R.slip.F_KQerf != null) {
+      row('F_KQ,erf', fmt(R.slip.F_KQerf, 0) + unit('N'));
+      if (R.slip.F_KR != null) row('F_KR', fmt(R.slip.F_KR, 0) + unit('N'));
     }
     host.appendChild(tbl);
 
