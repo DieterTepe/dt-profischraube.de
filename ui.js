@@ -85,7 +85,8 @@
       dtLoadedVer: 'Datei aus Version {v} geladen — Eingaben übernommen, Ergebnis neu gerechnet. Bitte Werte kurz prüfen.',
       dtErrParse: 'Datei konnte nicht gelesen werden (kein gültiges JSON).', dtErrFormat: 'Keine gültige DT-ProfiSchraube-Datei (.dt).',
       thermalProv: 'aus Thermik-Assistent (ΔT)',
-      flangeProv: 'aus Flansch-Assistent (M_T/z/r_LK)'
+      flangeProv: 'aus Flansch-Assistent (M_T/z/r_LK)',
+      taperProv: '0,9·d_3 (DIN 2510)'
     },
     en: {
       tagline: 'Bolted joint to VDI 2230 Part 1', loadExample: 'Load example',
@@ -110,7 +111,8 @@
       dtLoadedVer: 'File from version {v} loaded — inputs applied, result recomputed. Please review the values.',
       dtErrParse: 'File could not be read (not valid JSON).', dtErrFormat: 'Not a valid DT-ProfiSchraube file (.dt).',
       thermalProv: 'from thermal assistant (ΔT)',
-      flangeProv: 'from flange assistant (M_T/z/r_LK)'
+      flangeProv: 'from flange assistant (M_T/z/r_LK)',
+      taperProv: '0.9·d_3 (DIN 2510)'
     },
     pt: {
       tagline: 'União aparafusada conforme VDI 2230 Parte 1', loadExample: 'Carregar exemplo',
@@ -135,7 +137,8 @@
       dtLoadedVer: 'Ficheiro da versão {v} carregado — entradas aplicadas, resultado recalculado. Verifique os valores.',
       dtErrParse: 'Não foi possível ler o ficheiro (JSON inválido).', dtErrFormat: 'Ficheiro DT-ProfiSchraube (.dt) inválido.',
       thermalProv: 'do assistente térmico (ΔT)',
-      flangeProv: 'do assistente de flange (M_T/z/r_LK)'
+      flangeProv: 'do assistente de flange (M_T/z/r_LK)',
+      taperProv: '0,9·d_3 (DIN 2510)'
     }
   };
   var GROUP_ORDER = ['Schraube', 'Anziehen', 'Geometrie', 'Belastung', 'Setzen', 'Nachweise'];
@@ -348,6 +351,9 @@
     FLANGE_Z_MISSING: { en: 'The flange assistant is active but the bolt count z (≥ 1) is missing.', pt: 'O assistente de flange está ativo mas falta o número de parafusos z (≥ 1).' },
     FLANGE_R_MISSING: { en: 'The flange assistant is active but the bolt-circle radius r_LK (> 0) is missing.', pt: 'O assistente de flange está ativo mas falta o raio do círculo de furos r_LK (> 0).' },
     FLANGE_MT_ZERO: { en: 'M_T = 0: the flange assistant yields F_Qmax = 0 (no transverse force from torque).', pt: 'M_T = 0: o assistente de flange resulta em F_Qmax = 0 (sem força transversal do momento).' },
+    TAPER_L0_MISSING: { en: 'Bolt type "waisted bolt" is selected but the waist length L_0 (> 0, in mm) is missing.', pt: 'O tipo "parafuso de haste reduzida" está selecionado mas falta o comprimento da cintura L_0 (> 0, em mm).' },
+    TAPER_D0_LARGE: { en: 'd_0 is close to or above the thread minor diameter — probably not a true waist. For a waisted bolt choose d_0 ≤ 0.9·d_3 (the guide value is set automatically without the tick).', pt: 'd_0 está próximo ou acima do diâmetro do núcleo da rosca — provavelmente não é uma verdadeira cintura. Para um parafuso de haste reduzida escolha d_0 ≤ 0,9·d_3 (o valor indicativo é definido automaticamente sem o visto).' },
+    TAPER_L0_LONG: { en: 'The waist length L_0 is larger than the clamp length l_K — check the geometry (the waist normally lies within the clamp length).', pt: 'O comprimento da cintura L_0 é maior que o comprimento de aperto l_K — verifique a geometria (a cintura situa-se normalmente dentro do comprimento de aperto).' },
     REQUIRED: { en: '{label} is required.', pt: '{label} é obrigatório.' },
     ENUM_INVALID: { en: '{label}: invalid value. Allowed: {opts}.', pt: '{label}: valor inválido. Permitido: {opts}.' },
     NOT_A_NUMBER: { en: '{label} must be a number.', pt: '{label} deve ser um número.' },
@@ -399,6 +405,9 @@
     ASSUME_FKR_FORMULA: { en: 'Residual clamp force F_KR = F_Mmin − F_Z − max(0; ΔF_Vth) − (1−Φ_en)·F_A (preload gain not credited).', pt: 'Força de aperto residual F_KR = F_Mmin − F_Z − max(0; ΔF_Vth) − (1−Φ_en)·F_A (ganho de pré-tensão não creditado).' },
     ASSUME_THERMAL_APPROX: { en: 'Thermal (VDI approximation): ΔF_Vth = l_K·(α_S − α_P)·ΔT/(δ_S + δ_P). Temperature dependence of the elastic moduli NOT included.', pt: 'Térmico (aproximação VDI): ΔF_Vth = l_K·(α_S − α_P)·ΔT/(δ_S + δ_P). Dependência dos módulos E com a temperatura NÃO incluída.' },
     ASSUME_FLANGE_FQ: { en: 'Flange assistant: F_Qmax = M_T/(z·r_LK) per bolt (uniform load sharing across all bolts on the bolt circle).', pt: 'Assistente de flange: F_Qmax = M_T/(z·r_LK) por parafuso (distribuição uniforme da carga por todos os parafusos do círculo).' },
+    ASSUME_TAPER: { en: 'Waisted bolt (DIN 2510): δ_S includes the extra waist segment (the shank-length field means the NON-waisted part); strength checks R7/R8/R9 run in the governing section (waist if A_0 < A_S). Thread/R11 reference stays A_S.', pt: 'Parafuso de haste reduzida (DIN 2510): δ_S inclui o troço adicional da cintura (o campo comprimento da haste designa a parte NÃO estrangulada); as verificações R7/R8/R9 usam a secção determinante (cintura se A_0 < A_S). A referência da rosca/R11 continua A_S.' },
+    ASSUME_TAPER_D0: { en: 'Waist diameter d_0 = 0.9·d_3 = {d0} mm assumed (DIN 2510 guide value).', pt: 'Diâmetro da cintura d_0 = 0,9·d_3 = {d0} mm assumido (valor indicativo DIN 2510).' },
+    TAPER_NOT_GOVERNING: { en: 'd_0 is so large that A_0 ≥ A_S: the waist is NOT the weakest cross-section — the stress checks continue with A_S. For a true waisted bolt choose d_0 ≤ 0.9·d_3.', pt: 'd_0 é tão grande que A_0 ≥ A_S: a cintura NÃO é a secção mais fraca — as verificações de tensão continuam com A_S. Para um verdadeiro parafuso de haste reduzida escolha d_0 ≤ 0,9·d_3.' },
     ASSUME_ALPHA_S_CLASS: { en: 'α_S taken from the property class (guide value 20–100 °C: bolt steel ~11.5, austenitic ~16, in 10⁻⁶/K).', pt: 'α_S obtido da classe de resistência (valor indicativo 20–100 °C: aço ~11,5, austenítico ~16, em 10⁻⁶/K).' },
     ASSUME_ALPHA_P_MAT: { en: 'α_P taken from the plate material (guide value 20–100 °C, in 10⁻⁶/K).', pt: 'α_P obtido do material das peças (valor indicativo 20–100 °C, em 10⁻⁶/K).' },
     HINT_DFVTH_GAIN: { en: 'ΔF_Vth is a preload GAIN (hot state). Not credited for F_Mmin/F_KR (cold state governs); in F_Smax/F_Vmax it increases bolt force and surface pressure.', pt: 'ΔF_Vth é um GANHO de pré-tensão (estado quente). Não creditado em F_Mmin/F_KR (estado frio determinante); em F_Smax/F_Vmax aumenta a força do parafuso e a pressão superficial.' },
@@ -420,7 +429,8 @@
       .replace('{alphaA}', item.alphaA != null ? item.alphaA : '')
       .replace('{kTau}', item.kTau != null ? item.kTau : '')
       .replace('{ratio}', item.ratio != null ? Number(item.ratio).toFixed(2) : '')
-      .replace('{n}', item.n != null ? item.n : '');
+      .replace('{n}', item.n != null ? item.n : '')
+      .replace('{d0}', item.d_0 != null ? Number(item.d_0).toFixed(2) : '');
   }
 
   /* Verbesserungs-Hinweise (Stufe 2): dreisprachige Templates je Code.
@@ -496,7 +506,10 @@
       if (!drv || !row || !ctrl) return;
       var depF = FIELDS[dep], active;
       if (depF && depF.type === 'bool') { active = drv.checked; }
-      else if (depF && depF.type === 'enum') { var ev = drv.value; active = (ev !== '' && ev != null); }
+      else if (depF && depF.type === 'enum') {
+        var ev = drv.value, want = FIELDS[key].dependsOnValue;
+        active = (want != null) ? (ev === want) : (ev !== '' && ev != null);
+      }
       else { var dv = drv.value; active = (dv !== '' && dv != null && Number(dv) !== 0); }
       row.classList.toggle('is-disabled', !active);
       ctrl.disabled = !active;
@@ -527,6 +540,7 @@
     fillFromMaterial('plateMat', 'p_G', 'pgCustom', 'pG', 'N/mm²');
     fillFromMaterial('plateMat', 'alpha_P', 'apCustom', 'alpha', '10⁻⁶/K');
     fillAlphaS();
+    fillD0();
     updateThermalLock();
     updateFlangeLock();
   }
@@ -543,6 +557,29 @@
       var a = cls.stainless ? DATA.BOLT_ALPHA.stainless : DATA.BOLT_ALPHA.steel;
       tgt.value = a; tgt.readOnly = true; tgt.classList.add('locked');
       if (hintEl) hintEl.textContent = t('rmHintPrefix') + ': ' + src.value + ' · ' + a + ' 10⁻⁶/K';
+    } else {
+      tgt.readOnly = false; tgt.classList.remove('locked');
+      if (hintEl) hintEl.textContent = custom ? ('✎ ' + t('rmHintCustom')) : '';
+    }
+  }
+  /* d_0 aus der Gewindegroesse vorbelegen/sperren (Richtwert 0,9*d_3 nach
+   * DIN-2510-Praxis), gleiches Muster wie fillAlphaS; Quelle ist
+   * SOLVER.TAPER_D0_FACTOR * d_3 der gewaehlten Groesse. Per Haken d0Custom
+   * frei editierbar (Zeichnungsmass). Bei boltType != 'dehn' ist das Feld
+   * ueber updateDependencies ohnehin deaktiviert. */
+  function fillD0() {
+    var src = fieldEls['size'], cust = fieldEls['d0Custom'], tgt = fieldEls['d_0'];
+    var row = fieldRows['d_0']; if (!tgt || !row) return;
+    var hintEl = row.querySelector('.field-hint');
+    if (tgt.disabled) { tgt.readOnly = false; tgt.classList.remove('locked'); if (hintEl) hintEl.textContent = ''; return; }
+    var custom = !!(cust && cust.checked);
+    var g = null;
+    if (!custom && src && src.value) { try { g = SOLVER.forSize(src.value); } catch (e) { g = null; } }
+    if (!custom && g) {
+      var d0 = Math.round(SOLVER.TAPER_D0_FACTOR * g.d3 * 100) / 100;
+      tgt.value = d0;                            // Richtwert vorbelegen
+      tgt.readOnly = true; tgt.classList.add('locked');
+      if (hintEl) hintEl.textContent = t('rmHintPrefix') + ': ' + t('taperProv') + ' = ' + d0 + ' mm';
     } else {
       tgt.readOnly = false; tgt.classList.remove('locked');
       if (hintEl) hintEl.textContent = custom ? ('✎ ' + t('rmHintCustom')) : '';
@@ -689,6 +726,12 @@
     row('F_Smax', fmt(R.F_Smax, 0) + unit('N'));
     // Schrauben-E-Modul nur zeigen, wenn er vom Stahl-Standard abweicht (z. B. rostfrei ~200 GPa)
     if (R.E_S != null && R.E_S !== 205000) row('E_S', fmt(R.E_S, 0) + unit('N/mm²'));
+    // Dehnschraube: Taillenkennwerte (d_0, L_0, A_0) zeigen, wenn gerechnet
+    if (R.taper) {
+      row('d_0', fmt(R.taper.d_0, 2) + unit('mm'));
+      row('L_0', fmt(R.taper.L_0, 1) + unit('mm'));
+      row('A_0', fmt(R.taper.A_0, 2) + unit('mm²'));
+    }
     row('σ_z,max', fmt(R.sigma_zmax, 0) + unit('N/mm²'));
     row('σ_red,B', fmt(R.sigma_redB, 0) + unit('N/mm²'));
     // Dauerfestigkeit: Ausschlagspannung + ertragbare Spannung immer zeigen, wenn Schwinglast gerechnet

@@ -17,6 +17,7 @@
   var C = DATA.THREAD_CONST;
   var validateInput = (VALID && VALID.validateInput) ? VALID.validateInput : null;
   var RM_MAX_FACTOR = 1.2;   // R11: F_mS = RM_MAX_FACTOR * R_m,S * A_S (Bruchkraft-Basis, VDI-B3-Praezedenz)
+  var TAPER_D0_FACTOR = 0.9; // Dehnschraube: Richtwert Taillendurchmesser d_0 = 0,9*d_3 (DIN 2510-Praxis)
 
   /* Reine Gewindegeometrie nach DIN 13 / ISO 898-1.
    * Eingabe: d [mm], P [mm].  Rueckgabe: alle abgeleiteten Groessen [mm, mm^2].
@@ -101,10 +102,15 @@
   function area(dia) { return Math.PI / 4 * dia * dia; }
 
   /* Schraubennachgiebigkeit delta_S [mm/N] (Durchsteckverbindung mit Mutter).
-   * cfg: { d, d3, lShank, lThreadFree, E_S, [E_M], [l_SK], [l_G], [l_M] } */
+   * cfg: { d, d3, lShank, lThreadFree, E_S, [E_M], [l_SK], [l_G], [l_M], [d_0], [l_0] }
+   * Dehnschraube: optionales ZUSAETZLICHES Reihenglied Taille l_0/(E_S*A_0)
+   * mit A_0 = pi/4*d_0^2. Konvention: lShank ist der NICHT-taillierte
+   * Schaftanteil; die Taille wird nicht automatisch abgezogen (eindeutig). */
   function boltCompliance(cfg) {
     if (!(cfg.d > 0) || !(cfg.d3 > 0) || !(cfg.E_S > 0)) throw new Error('boltCompliance: d, d3, E_S muessen > 0 sein');
     if (!(cfg.lShank >= 0) || !(cfg.lThreadFree >= 0)) throw new Error('boltCompliance: Laengen muessen >= 0 sein');
+    if (cfg.l_0 != null && !(cfg.l_0 >= 0)) throw new Error('boltCompliance: l_0 muss >= 0 sein');
+    if (cfg.l_0 > 0 && !(cfg.d_0 > 0)) throw new Error('boltCompliance: d_0 > 0 noetig, wenn l_0 > 0');
     var E_S = cfg.E_S, E_M = cfg.E_M || cfg.E_S;
     var A_N = area(cfg.d), A_d3 = area(cfg.d3);
     var l_SK = (cfg.l_SK != null) ? cfg.l_SK : SUBLEN.headFactor * cfg.d;
@@ -112,11 +118,12 @@
     var l_M  = (cfg.l_M  != null) ? cfg.l_M  : SUBLEN.nutFactor * cfg.d;
     var dHead   = l_SK / (E_S * A_N);
     var dShank  = cfg.lShank / (E_S * A_N);
+    var dTaper  = (cfg.l_0 > 0) ? cfg.l_0 / (E_S * area(cfg.d_0)) : 0;
     var dThread = cfg.lThreadFree / (E_S * A_d3);
     var dG      = l_G / (E_S * A_d3);
     var dM      = l_M / (E_M * A_N);
-    var dS = dHead + dShank + dThread + dG + dM;
-    return { deltaS: dS, parts: { head: dHead, shank: dShank, threadFree: dThread, engaged: dG, nut: dM } };
+    var dS = dHead + dShank + dTaper + dThread + dG + dM;
+    return { deltaS: dS, parts: { head: dHead, shank: dShank, taper: dTaper, threadFree: dThread, engaged: dG, nut: dM } };
   }
 
   /* Plattennachgiebigkeit — NUR Huelsenfall (D_A <= d_w):
@@ -516,6 +523,29 @@
     var s = strength(inp.strengthClass);
     var Rp = s.Rp, Rm = s.Rm;
 
+    /* Dehn-/Taillenschraube (Baustein 4, v4.4-Serie): Der Schaft traegt eine
+     * Taille mit Durchmesser d_0 (< d_3) und Laenge L_0 (DIN 2510). Selektive
+     * Ersetzung A_S -> A_0 = pi/4*d_0^2 NUR dort, wo die Taille der
+     * schwaechste Querschnitt ist: delta_S (zusaetzliches Reihenglied),
+     * R7 (F_Mzul: A_0 + W_p aus d_0), R8 (sigma_z,max) und R9 (sigma_a,
+     * F_0,2min). Der Gewinde-/R11-Bezug bleibt bei A_S (Gewindeabstreifen
+     * haengt am Gewinde, nicht an der Taille). Ist A_0 >= A_S (keine echte
+     * Taille), bleibt der Gewindequerschnitt massgeblich (Hinweis). */
+    var taper = null;
+    if (inp.boltType === 'dehn') {
+      var d0 = (inp.d_0 != null) ? inp.d_0 : TAPER_D0_FACTOR * g.d3;
+      if (!(d0 > 0)) throw new Error('computeJoint: Taillendurchmesser d_0 > 0 noetig');
+      if (!(inp.L_0 > 0)) throw new Error('computeJoint: Taillenlaenge L_0 > 0 noetig');
+      var A0t = area(d0);
+      taper = { d_0: d0, L_0: inp.L_0, A_0: A0t, W_p0: polarSectionModulus(d0), governs: A0t < g.As };
+      if (inp.d_0 == null) notes.assumptions.push({ code: 'ASSUME_TAPER_D0', d_0: d0, text: 'Taillendurchmesser d_0 = 0,9*d_3 = ' + d0.toFixed(2) + ' mm angenommen (Richtwert DIN 2510).' });
+      notes.assumptions.push({ code: 'ASSUME_TAPER', text: 'Dehnschraube: Taille d_0 = ' + d0.toFixed(2) + ' mm, L_0 = ' + inp.L_0 + ' mm. delta_S mit zusaetzlichem Taillenglied (lShank = nicht-taillierter Schaftanteil); Spannungsnachweise R7/R8/R9 im ' + (taper.governs ? 'Taillenquerschnitt A_0' : 'Gewindequerschnitt A_S (A_0 >= A_S)') + '. Gewinde-/R11-Bezug unveraendert A_S.' });
+      if (!taper.governs) notes.pending.push({ code: 'TAPER_NOT_GOVERNING', text: 'd_0 ist so gross, dass A_0 >= A_S: die Taille ist NICHT der schwaechste Querschnitt — Spannungsnachweise laufen weiter ueber A_S. Fuer eine echte Dehnschraube d_0 <= 0,9*d_3 waehlen.' });
+    }
+    // Massgeblicher Spannungsquerschnitt fuer R7/R8/R9 (Taille, wenn schwaecher)
+    var A_sig = (taper && taper.governs) ? taper.A_0 : g.As;
+    var d_sig = (taper && taper.governs) ? taper.d_0 : g.ds;
+
     var muG = (inp.muG != null) ? inp.muG : frictionMid(inp.frictionClass);
     var muK = (inp.muK != null) ? inp.muK : muG;
     var alphaA;
@@ -537,7 +567,7 @@
     // E_M (Ersatzteil Mutter/Einschraubteil): DSV -> Mutter aus Stahl (E_S);
     // ESV -> eingeschraubtes Teil = verspanntes Material (E_P).
     var E_M_eff = (inp.E_M != null) ? inp.E_M : (conn === 'ESV' ? inp.E_P : E_S_eff);
-    var deltaS = boltCompliance({ d: g.d, d3: g.d3, lShank: inp.lShank, lThreadFree: inp.lThreadFree, E_S: E_S_eff, E_M: E_M_eff, l_SK: inp.l_SK, l_G: inp.l_G, l_M: inp.l_M }).deltaS;
+    var deltaS = boltCompliance({ d: g.d, d3: g.d3, lShank: inp.lShank, lThreadFree: inp.lThreadFree, E_S: E_S_eff, E_M: E_M_eff, l_SK: inp.l_SK, l_G: inp.l_G, l_M: inp.l_M, d_0: (taper ? taper.d_0 : null), l_0: (taper ? taper.L_0 : null) }).deltaS;
 
     var deltaP, deltaPmodel, tanPhi = null, DAGr = null;
     if (inp.deltaP != null) {
@@ -591,7 +621,9 @@
     var F_Mmin = assemblyPreloadMin({ F_Kerf: inp.F_Kerf, phiEn: PhiEn, F_A: F_A, F_Z: F_Z, deltaFvth: deltaFvthLoss }).F_Mmin;
     var F_Mmax = assemblyPreloadMax({ F_Mmin: F_Mmin, alphaA: alphaA }).F_Mmax;
 
-    var pp = permissiblePreload({ Rp02: Rp, A_S: g.As, d2: g.d2, d_S: g.ds, P: g.P, muG: muG });
+    // R7: bei Dehnschraube ist die Taille auch beim Anziehen der schwaechste
+    // Querschnitt -> A_0 und W_p aus d_0 (A_sig/d_sig); sonst A_S/d_S.
+    var pp = permissiblePreload({ Rp02: Rp, A_S: A_sig, d2: g.d2, d_S: d_sig, P: g.P, muG: muG });
     var F_Mzul = pp.F_Mzul;
     var preloadOK = F_Mmax <= F_Mzul;
 
@@ -605,16 +637,16 @@
     var kTau = (inp.kTau != null) ? inp.kTau : 0.5;
     notes.assumptions.push({ code: 'ASSUME_KTAU', kTau: kTau, text: 'Torsions-Restfaktor k_tau = ' + kTau + ' im Betrieb' });
     var tauResidual = kTau * (threadTorque({ F_M: F_Mzul, P: g.P, d2: g.d2, muG: muG }) / pp.W_p);
-    var os = operatingStress({ F_Smax: F_Smax, A_S: g.As, Rp02: Rp, tau: tauResidual });
+    var os = operatingStress({ F_Smax: F_Smax, A_S: A_sig, Rp02: Rp, tau: tauResidual });
 
     var fatigue = null;
     if (inp.F_Ao != null && inp.F_Au != null) {
-      var sa = fatigueAmplitude({ F_SAo: PhiEn * inp.F_Ao, F_SAu: PhiEn * inp.F_Au, A0: (inp.A0 || g.As) });
+      var sa = fatigueAmplitude({ F_SAo: PhiEn * inp.F_Ao, F_SAu: PhiEn * inp.F_Au, A0: (taper && taper.governs ? taper.A_0 : (inp.A0 || g.As)) });
       var finish = (inp.threadFinish === 'SG') ? 'SG' : 'SV';
       var sASV = enduranceLimitSV(g.d);
       var sA = sASV, F_Sm = null, F02 = null, sgRatio = null;
       if (finish === 'SG') {
-        F02 = Rp * g.As;                                         // Streckgrenzkraft F_0,2min
+        F02 = Rp * A_sig;                                        // Streckgrenzkraft F_0,2min (Taille bei Dehnschraube)
         F_Sm = F_Mzul + PhiEn * (inp.F_Ao + inp.F_Au) / 2;       // mittlere Schraubenkraft
         var sg = enduranceLimitSG({ d: g.d, F_Sm: F_Sm, F02min: F02 });
         sgRatio = sg.ratio;
@@ -706,7 +738,8 @@
       F_Mmin: F_Mmin, F_Mmax: F_Mmax, F_Mzul: F_Mzul, preloadOK: preloadOK,
       M_A: torque.M_A, M_G: torque.M_G, M_K: torque.M_K,
       F_Vmax: F_Vmax, F_Smax: F_Smax, sigma_zmax: os.sigma_zmax, sigma_redB: os.sigma_redB, S_F: os.S_F,
-      fatigue: fatigue, pressure: pressure, slip: slip, engagement: engagement, flange: flange
+      fatigue: fatigue, pressure: pressure, slip: slip, engagement: engagement, flange: flange,
+      taper: taper, A_sig: A_sig
     };
     result.improvements = improvementHints(result, inp);
     return result;
@@ -766,10 +799,11 @@
   }
 
   return {
-    VERSION: '0.8.0-engine',
+    VERSION: '0.9.0-engine',
     data: DATA,
     SUBLEN: SUBLEN,
     TANPHI_MIN: TANPHI_MIN,
+    TAPER_D0_FACTOR: TAPER_D0_FACTOR,
     threadGeometry: threadGeometry,
     forSize: forSize,
     strength: strength,

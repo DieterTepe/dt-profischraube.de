@@ -29,6 +29,7 @@
       case 'tightening':    return keys(DATA.TIGHTENING);
       case 'rz':            return keys(DATA.SETTLING);
       case 'connection':    return ['DSV', 'ESV'];
+      case 'boltType':      return ['schaft', 'dehn'];
       case 'loadMode':      return ['axial', 'shear'];
       case 'threadFinish':  return ['SV', 'SG'];
       case 'surfaceFinish': return keys(DATA.SURFACE_FATIGUE);
@@ -55,6 +56,10 @@
       SV: { de: 'schlussvergütet (vor Wärmebehandlung gerollt)', en: 'heat-treated after rolling (SV)', pt: 'temperada após laminagem (SV)' },
       SG: { de: 'schlussgewalzt (nach Wärmebehandlung gerollt)', en: 'rolled after heat treatment (SG)', pt: 'laminada após tratamento térmico (SG)' }
     };
+    var BT = {
+      schaft: { de: 'normale Schaftschraube (Standard)', en: 'standard full-shank bolt (default)', pt: 'parafuso de haste normal (padrão)' },
+      dehn:   { de: 'Dehn-/Taillenschraube (DIN 2510, verjüngter Schaft d_0)', en: 'reduced-shank / waisted bolt (DIN 2510, necked shank d_0)', pt: 'parafuso de haste reduzida (DIN 2510, haste estrangulada d_0)' }
+    };
     var vals = enumValues(name), out = [];
     for (var i = 0; i < vals.length; i++) {
       var v = vals[i], note = '', rec = false, F;
@@ -64,6 +69,7 @@
       else if (name === 'connection') { note = pick(CONN[v]); }
       else if (name === 'loadMode') { note = pick(LM[v]); }
       else if (name === 'threadFinish') { note = pick(TF[v]); rec = (v === 'SV'); }
+      else if (name === 'boltType') { note = pick(BT[v]); rec = (v === 'schaft'); }
       else if (name === 'surfaceFinish' && (F = DATA.SURFACE_FATIGUE[v])) { note = pick(F.label); rec = (v === 'blank'); }
       else if (name === 'matGroupM' && (F = DATA.TAU_RATIO[v])) { note = pick(F.label) + ' · τB/Rm ' + F.ratio + (F.src && /Sch[aä]tz/.test(F.src) ? ' · Schätzwert (kein Norm-Beleg)' : ''); }
       else if (name === 'plateMat' && (F = DATA.TAU_RATIO[v])) { note = pick(F.label) + ' · E ' + F.E + ' · p_G ' + F.pG + ' N/mm²' + (F.src && /Sch[aä]tz/.test(F.src) ? ' · p_G Schätzwert' : ''); }
@@ -102,6 +108,42 @@
         de: 'Elastizitaetsmodul des Schraubenwerkstoffs. Fuer Stahlschrauben rund 205 000 N/mm^2 (Standard, wird automatisch verwendet). Nur aendern, wenn ein anderer Werkstoff vorliegt.',
         en: 'Elastic modulus of the bolt material. For steel bolts about 205,000 N/mm² (default, used automatically). Change only for a different material.',
         pt: 'Módulo de elasticidade do material do parafuso. Para parafusos de aço cerca de 205 000 N/mm² (predefinição, usada automaticamente). Altere apenas para outro material.'
+      }
+    },
+    boltType: {
+      label: { de: 'Schraubentyp', en: 'Bolt type', pt: 'Tipo de parafuso' },
+      group: 'Schraube', type: 'enum', enumOf: 'boltType', diagram: null,
+      help: {
+        de: 'Schaftschraube = normale Schraube mit vollem Schaft (Standard). Dehn-/Taillenschraube (DIN 2510) = der Schaft ist auf einen kleineren Durchmesser d_0 verjuengt ("Taille"). Wozu? Die duennere Taille macht die Schraube federweicher: sie nimmt bei schwingender Betriebslast einen kleineren Kraftanteil auf und vertraegt Wechsellasten deutlich besser (Turbinen-, Zylinderkopf-, Pleuelschrauben). Achtung: Die Taille ist dann der schwaechste Querschnitt — das Programm fuehrt die Festigkeitsnachweise (Anziehen, Betrieb, Dauerfestigkeit) automatisch dort.',
+        en: 'Full-shank bolt = ordinary bolt with a full shank (default). Reduced-shank / waisted bolt (DIN 2510) = the shank is necked down to a smaller diameter d_0 ("waist"). Why? The slimmer waist makes the bolt more elastic: it picks up a smaller share of a fluctuating working load and tolerates alternating loads much better (turbine, cylinder-head, con-rod bolts). Note: the waist then is the weakest cross-section — the program automatically runs the strength checks (tightening, service, fatigue) there.',
+        pt: 'Parafuso de haste normal = parafuso comum com haste completa (padrão). Parafuso de haste reduzida (DIN 2510) = a haste é estrangulada para um diâmetro menor d_0 ("cintura"). Para quê? A cintura mais fina torna o parafuso mais elástico: absorve uma parte menor da carga de serviço variável e suporta muito melhor cargas alternadas (parafusos de turbina, cabeça de cilindro, biela). Atenção: a cintura passa a ser a secção mais fraca — o programa executa automaticamente as verificações de resistência (aperto, serviço, fadiga) nessa secção.'
+      }
+    },
+    d_0: {
+      label: { de: 'Taillendurchmesser d_0', en: 'Waist diameter d_0', pt: 'Diâmetro da cintura d_0' },
+      group: 'Schraube', type: 'number', unit: 'mm', min: 0.5, max: 200, decimals: 2, diagram: null, dependsOn: 'boltType', dependsOnValue: 'dehn',
+      help: {
+        de: 'Durchmesser des verjuengten Schaftabschnitts (Taille). Richtwert nach DIN-2510-Praxis: d_0 = 0,9 * d_3 (Gewinde-Kerndurchmesser) — wird automatisch vorbelegt und kann per Haken "d_0 selbst eingeben" ueberschrieben werden (Zeichnungsmass verwenden). d_0 muss kleiner als der Kerndurchmesser sein, sonst ist die Taille nicht der schwaechste Querschnitt und der Dehnschrauben-Effekt entfaellt.',
+        en: 'Diameter of the necked shank section (waist). Guide value per DIN 2510 practice: d_0 = 0.9 * d_3 (thread minor diameter) — pre-filled automatically; tick "enter d_0 manually" to override with the drawing dimension. d_0 must be smaller than the minor diameter, otherwise the waist is not the weakest section and the waisted-bolt effect is lost.',
+        pt: 'Diâmetro da secção estrangulada da haste (cintura). Valor indicativo pela prática DIN 2510: d_0 = 0,9 * d_3 (diâmetro do núcleo da rosca) — preenchido automaticamente; marque "introduzir d_0 manualmente" para usar a cota do desenho. d_0 deve ser menor do que o diâmetro do núcleo; caso contrário a cintura não é a secção mais fraca e o efeito perde-se.'
+      }
+    },
+    d0Custom: {
+      label: { de: 'd_0 selbst eingeben (statt Richtwert 0,9·d_3)', en: 'Enter d_0 manually (instead of guide value 0.9·d_3)', pt: 'Introduzir d_0 manualmente (em vez do valor indicativo 0,9·d_3)' },
+      group: 'Schraube', type: 'bool', diagram: null, dependsOn: 'boltType', dependsOnValue: 'dehn',
+      help: {
+        de: 'Ohne Haken wird d_0 automatisch als Richtwert 0,9 * d_3 aus der gewaehlten Gewindegroesse vorbelegt und gesperrt. Setze den Haken, um den tatsaechlichen Taillendurchmesser deiner Zeichnung einzugeben.',
+        en: 'Without the tick, d_0 is pre-filled with the guide value 0.9 * d_3 from the selected thread size and locked. Tick it to enter the actual waist diameter from your drawing.',
+        pt: 'Sem o visto, d_0 é preenchido com o valor indicativo 0,9 * d_3 do tamanho de rosca selecionado e bloqueado. Marque para introduzir o diâmetro real da cintura do seu desenho.'
+      }
+    },
+    L_0: {
+      label: { de: 'Taillenlaenge L_0', en: 'Waist length L_0', pt: 'Comprimento da cintura L_0' },
+      group: 'Schraube', type: 'number', unit: 'mm', min: 0.1, max: 5000, decimals: 1, diagram: null, dependsOn: 'boltType', dependsOnValue: 'dehn',
+      help: {
+        de: 'Laenge des verjuengten (taillierten) Schaftabschnitts laut Zeichnung. Wichtig: Das Feld "Schaftlaenge" bezeichnet weiterhin nur den NICHT-taillierten zylindrischen Schaftanteil — die Taille kommt als eigener Abschnitt dazu (nichts doppelt eingeben). Je laenger die Taille, desto federweicher die Schraube und desto besser die Dauerfestigkeit.',
+        en: 'Length of the necked (waisted) shank section per drawing. Important: the "shank length" field still means only the NON-waisted cylindrical part — the waist is added as its own section (do not enter anything twice). The longer the waist, the more elastic the bolt and the better the fatigue behaviour.',
+        pt: 'Comprimento da secção estrangulada da haste conforme o desenho. Importante: o campo "comprimento da haste" continua a designar apenas a parte cilíndrica NÃO estrangulada — a cintura entra como secção própria (não introduzir nada em duplicado). Quanto mais longa a cintura, mais elástico o parafuso e melhor o comportamento à fadiga.'
       }
     },
 
@@ -716,6 +758,23 @@
       if (!num(inp.z_bolts) || inp.z_bolts < 1) err('z_bolts', 'FLANGE_Z_MISSING', 'Der Flansch-Assistent ist aktiv, aber die Schraubenzahl z (>= 1) fehlt.');
       if (!num(inp.r_LK) || inp.r_LK <= 0) err('r_LK', 'FLANGE_R_MISSING', 'Der Flansch-Assistent ist aktiv, aber der Lochkreisradius r_LK (> 0) fehlt.');
       if (num(inp.M_T) && inp.M_T === 0) warn('M_T', 'FLANGE_MT_ZERO', 'M_T = 0: Der Flansch-Assistent liefert F_Qmax = 0 (keine Querkraft aus Drehmoment).');
+    }
+
+    /* 10) Dehn-/Taillenschraube: braucht L_0; d_0 hat den Richtwert 0,9*d_3 als
+     *     Engine-Fallback (die UI belegt ihn ohnehin vor). Grobe Plausibilitaet:
+     *     d_0 nahe am/ueber dem Nenndurchmesser ist keine echte Taille (die
+     *     praezise A_0-vs-A_S-Pruefung macht die Engine, Hinweis TAPER_NOT_GOVERNING). */
+    if (inp.boltType === 'dehn') {
+      if (!num(inp.L_0) || inp.L_0 <= 0) err('L_0', 'TAPER_L0_MISSING', 'Schraubentyp Dehnschraube ist gewaehlt, aber die Taillenlaenge L_0 (> 0, in mm) fehlt.');
+      var dNomT = null;
+      if (present(inp.size) && DATA.THREADS[inp.size]) dNomT = DATA.THREADS[inp.size].d;
+      else if (num(inp.d)) dNomT = inp.d;
+      if (num(inp.d_0) && dNomT != null && inp.d_0 >= 0.8 * dNomT) {
+        warn('d_0', 'TAPER_D0_LARGE', 'd_0 = ' + inp.d_0 + ' mm liegt nahe am Gewinde-Kerndurchmesser oder darueber — vermutlich keine echte Taille. Fuer eine Dehnschraube d_0 <= 0,9 * d_3 waehlen (Richtwert wird ohne Haken automatisch gesetzt).');
+      }
+      if (num(inp.L_0) && num(inp.l_K) && inp.L_0 > inp.l_K) {
+        warn('L_0', 'TAPER_L0_LONG', 'Die Taillenlaenge L_0 = ' + inp.L_0 + ' mm ist groesser als die Klemmlaenge l_K = ' + inp.l_K + ' mm — Geometrie pruefen (die Taille liegt normalerweise innerhalb der Klemmlaenge).');
+      }
     }
 
     return { ok: errors.length === 0, errors: errors, warnings: warnings };

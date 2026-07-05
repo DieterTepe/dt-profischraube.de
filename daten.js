@@ -369,6 +369,20 @@
         thermalAssist: true, dT: -40, alpha_S: 11.5, alpha_P: 23.0
       }
     },
+    'dehnschraube_m16': {
+      label: 'Dehnschraube M16 10.9 (DIN 2510, Taille d_0 = 12,2 mm · L_0 = 85 mm)',
+      quelle: 'illustratives Testbeispiel (nicht normvalidiert; A_0 ersetzt A_S in R7/R8/R9, Gewinde-/R11-Bezug bleibt A_S)',
+      illustrativ: true,
+      input: {
+        size: 'M16', strengthClass: '10.9', frictionClass: 'B',
+        tightening: 'drehmomentgesteuert', connection: 'DSV', n: 0.3,
+        boltType: 'dehn', d_0: 12.2, d0Custom: true, L_0: 85,
+        lShank: 0, lThreadFree: 10,
+        l_K: 100, d_w: 22.5, d_h: 17.5, D_A: 50, E_P: 210000, p_G: 630,
+        F_Kerf: 15000, F_Ao: 30000, F_Au: 0, loadMode: 'axial',
+        rz: 'Rz10-40', seats: 2, interfaces: 1
+      }
+    },
     'rostfrei_a4_m10': {
       label: 'Rostfrei M10 A4-80 in Austenit (Einschraubung, R11)',
       quelle: 'illustratives Testbeispiel (nicht normvalidiert; rostfrei/Austenit, σ_A nur Näherung)',

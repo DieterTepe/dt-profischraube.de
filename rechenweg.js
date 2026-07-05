@@ -76,6 +76,29 @@
       return o;
     }
 
+    /* ---- R0a: Dehnschraube — Taillenquerschnitt A_0 (nur bei boltType 'dehn') ----
+     * d_0 robust aus dem Engine-Ergebnis (deckt den 0,9*d_3-Fallback ab, wie
+     * F_Qmax in R12a); A_0 wird hier unabhaengig nachgerechnet. */
+    var taper = R.taper || null;
+    var taperGov = !!(taper && taper.governs);
+    var A0t = null;
+    if (taper) {
+      A0t = Math.PI / 4 * taper.d_0 * taper.d_0;
+      step({
+        id: 'taper', phase: 'R0',
+        titleI: { de: 'Dehnschraube: Taillenquerschnitt A_0', en: 'Waisted bolt: waist cross-section A_0', pt: 'Parafuso de haste reduzida: secção da cintura A_0' },
+        formula: 'A_0 = π/4·d_0²',
+        sub: 'd_0 = ' + nf(taper.d_0, 2) + ' mm,  L_0 = ' + nf(taper.L_0, 1) + ' mm'
+          + '\nA_0 = π/4·' + nf(taper.d_0, 2) + '²  (' + LT('Vergleich', 'compare', 'comparação') + ': A_S = ' + nf(g.As, 2) + ' mm²)',
+        result: nf(A0t, 2) + ' mm²',
+        _val: A0t, _exp: taper.A_0,
+        noteI: taperGov
+          ? { de: 'A_0 < A_S: Die Taille ist der schwächste Querschnitt — die Nachweise R7/R8/R9 laufen im Taillenquerschnitt. Gewinde-/R11-Bezug bleibt A_S.', en: 'A_0 < A_S: the waist is the weakest cross-section — checks R7/R8/R9 run in the waist section. Thread/R11 reference stays A_S.', pt: 'A_0 < A_S: a cintura é a secção mais fraca — as verificações R7/R8/R9 usam a secção da cintura. A referência da rosca/R11 continua A_S.' }
+          : { de: 'A_0 ≥ A_S: Die Taille ist NICHT der schwächste Querschnitt — die Nachweise laufen weiter über A_S (keine echte Dehnschraube).', en: 'A_0 ≥ A_S: the waist is NOT the weakest cross-section — checks continue with A_S (not a true waisted bolt).', pt: 'A_0 ≥ A_S: a cintura NÃO é a secção mais fraca — as verificações continuam com A_S (não é um verdadeiro parafuso de haste reduzida).' },
+        ref: 'DIN 2510 / VDI 2230 Bl.1'
+      });
+    }
+
     /* ---- R3: Schraubennachgiebigkeit delta_S ---- */
     // E_S bevorzugt aus dem Engine-Ergebnis (beruecksichtigt rostfreie Klassen ~200 GPa),
     // sonst Nutzerwert, sonst Default.
@@ -86,16 +109,19 @@
     var l_G = (inp.l_G != null) ? inp.l_G : 0.5 * g.d;
     var l_M = (inp.l_M != null) ? inp.l_M : 0.4 * g.d;
     var lShank = inp.lShank || 0, lThreadFree = inp.lThreadFree || 0;
-    var dS = l_SK / (E_S * A_N) + lShank / (E_S * A_N) + lThreadFree / (E_S * A_d3) + l_G / (E_S * A_d3) + l_M / (E_M * A_N);
+    var dTaper = taper ? taper.L_0 / (E_S * A0t) : 0;
+    var dS = l_SK / (E_S * A_N) + lShank / (E_S * A_N) + dTaper + lThreadFree / (E_S * A_d3) + l_G / (E_S * A_d3) + l_M / (E_M * A_N);
     step({
       id: 'dS', phase: 'R3',
       titleI: { de: 'Schraubennachgiebigkeit δ_S', en: 'Bolt compliance δ_S', pt: 'Flexibilidade do parafuso δ_S' },
-      formula: 'δ_S = l_SK/(E_S·A_N) + l_' + LT('Schaft', 'shank', 'haste') + '/(E_S·A_N) + l_' + LT('Gew', 'thr', 'rosca') + '/(E_S·A_d3) + l_G/(E_S·A_d3) + l_M/(E_M·A_N)',
+      formula: 'δ_S = l_SK/(E_S·A_N) + l_' + LT('Schaft', 'shank', 'haste') + '/(E_S·A_N)' + (taper ? ' + L_0/(E_S·A_0)' : '') + ' + l_' + LT('Gew', 'thr', 'rosca') + '/(E_S·A_d3) + l_G/(E_S·A_d3) + l_M/(E_M·A_N)',
       sub: 'A_N = ' + nf(A_N, 2) + ' mm²,  A_d3 = ' + nf(A_d3, 2) + ' mm²,  E_S = ' + nf(E_S, 0) + ' N/mm²'
-        + '\nl_SK=' + nf(l_SK, 2) + ', l_' + LT('Schaft', 'shank', 'haste') + '=' + nf(lShank, 2) + ', l_' + LT('Gew', 'thr', 'rosca') + '=' + nf(lThreadFree, 2) + ', l_G=' + nf(l_G, 2) + ', l_M=' + nf(l_M, 2) + ' mm',
+        + '\nl_SK=' + nf(l_SK, 2) + ', l_' + LT('Schaft', 'shank', 'haste') + '=' + nf(lShank, 2) + (taper ? ', L_0=' + nf(taper.L_0, 1) + ' (A_0=' + nf(A0t, 2) + ' mm²)' : '') + ', l_' + LT('Gew', 'thr', 'rosca') + '=' + nf(lThreadFree, 2) + ', l_G=' + nf(l_G, 2) + ', l_M=' + nf(l_M, 2) + ' mm',
       result: ef(dS) + ' mm/N',
       _val: dS, _exp: R.deltaS,
-      noteI: { de: 'Reihenschaltung der Feder-Abschnitte (Kopf, Schaft, freies & eingeschr. Gewinde, Mutter/Einschraubteil).', en: 'Series connection of the spring segments (head, shank, free & engaged thread, nut/tapped part).', pt: 'Associação em série dos troços elásticos (cabeça, haste, rosca livre e engatada, porca/peça roscada).' },
+      noteI: taper
+        ? { de: 'Reihenschaltung der Feder-Abschnitte; die Taille kommt als eigener, besonders weicher Abschnitt dazu (Dehnschrauben-Effekt: kleineres Φ, geringere Schwing-Zusatzkraft).', en: 'Series connection of the spring segments; the waist adds its own, especially soft segment (waisted-bolt effect: smaller Φ, lower cyclic add-on force).', pt: 'Associação em série dos troços elásticos; a cintura entra como troço próprio, especialmente flexível (efeito do parafuso de haste reduzida: Φ menor, menor força adicional cíclica).' }
+        : { de: 'Reihenschaltung der Feder-Abschnitte (Kopf, Schaft, freies & eingeschr. Gewinde, Mutter/Einschraubteil).', en: 'Series connection of the spring segments (head, shank, free & engaged thread, nut/tapped part).', pt: 'Associação em série dos troços elásticos (cabeça, haste, rosca livre e engatada, porca/peça roscada).' },
       ref: 'VDI 2230 Bl.1 · R3'
     });
 
@@ -237,20 +263,28 @@
       ref: 'VDI 2230 Bl.1 · R6'
     });
 
-    /* ---- R7: Zulaessige Montagevorspannkraft F_Mzul ---- */
-    var Wp = Math.PI / 16 * g.ds * g.ds * g.ds;
+    /* ---- R7: Zulaessige Montagevorspannkraft F_Mzul ----
+     * Dehnschraube mit massgeblicher Taille: A_0 und W_p aus d_0 (schwaechster
+     * Querschnitt auch beim Anziehen) — exakt wie in der Engine. */
+    var A_R7 = taperGov ? A0t : g.As;
+    var d_R7 = taperGov ? taper.d_0 : g.ds;
+    var Wp = Math.PI / 16 * d_R7 * d_R7 * d_R7;
     var mQ = C_PITCH * g.P + C_FLANK * muG * g.d2;
-    var kf = Math.sqrt(1 / (g.As * g.As) + 3 * (mQ / Wp) * (mQ / Wp));
+    var kf = Math.sqrt(1 / (A_R7 * A_R7) + 3 * (mQ / Wp) * (mQ / Wp));
     var F_Mzul = 0.9 * Rp / kf;
     step({
       id: 'FMzul', phase: 'R7',
       titleI: { de: 'Zulässige Montagevorspannkraft F_Mzul', en: 'Permissible assembly preload F_Mzul', pt: 'Pré-tensão de montagem admissível F_Mzul' },
-      formula: 'F_Mzul = ν·R_p0,2 / √(1/A_S² + 3·(m/W_p)²),   m = P/(2π) + 0,577·μ_G·d_2,   W_p = π/16·d_S³,   ν = 0,9',
-      sub: 'W_p = ' + nf(Wp, 1) + ' mm³,  m = ' + nf(mQ, 3) + ' mm,  A_S = ' + nf(g.As, 2) + ' mm²,  R_p0,2 = ' + nf(Rp, 0) + ' N/mm²'
+      formula: taperGov
+        ? 'F_Mzul = ν·R_p0,2 / √(1/A_0² + 3·(m/W_p)²),   m = P/(2π) + 0,577·μ_G·d_2,   W_p = π/16·d_0³,   ν = 0,9'
+        : 'F_Mzul = ν·R_p0,2 / √(1/A_S² + 3·(m/W_p)²),   m = P/(2π) + 0,577·μ_G·d_2,   W_p = π/16·d_S³,   ν = 0,9',
+      sub: 'W_p = ' + nf(Wp, 1) + ' mm³,  m = ' + nf(mQ, 3) + ' mm,  ' + (taperGov ? 'A_0' : 'A_S') + ' = ' + nf(A_R7, 2) + ' mm²,  R_p0,2 = ' + nf(Rp, 0) + ' N/mm²'
         + '\nF_Mzul = 0,9·' + nf(Rp, 0) + ' / ' + nf(kf, 4),
       result: nf(F_Mzul, 0) + ' N',
       _val: F_Mzul, _exp: R.F_Mzul,
-      noteI: { de: '90 % Ausnutzung der Streckgrenze unter Zug + Torsion aus dem Anziehen (von Mises).', en: '90 % utilisation of the yield point under tension + torsion from tightening (von Mises).', pt: '90 % de utilização do limite de escoamento sob tração + torção do aperto (von Mises).' },
+      noteI: taperGov
+        ? { de: '90 % Ausnutzung der Streckgrenze unter Zug + Torsion aus dem Anziehen (von Mises) — bei der Dehnschraube im Taillenquerschnitt, denn die Taille ist auch beim Anziehen der schwächste Querschnitt.', en: '90 % utilisation of the yield point under tension + torsion from tightening (von Mises) — for the waisted bolt in the waist section, since the waist is the weakest cross-section during tightening too.', pt: '90 % de utilização do limite de escoamento sob tração + torção do aperto (von Mises) — no parafuso de haste reduzida na secção da cintura, pois a cintura é a secção mais fraca também no aperto.' }
+        : { de: '90 % Ausnutzung der Streckgrenze unter Zug + Torsion aus dem Anziehen (von Mises).', en: '90 % utilisation of the yield point under tension + torsion from tightening (von Mises).', pt: '90 % de utilização do limite de escoamento sob tração + torção do aperto (von Mises).' },
       ref: 'VDI 2230 Bl.1 · R7'
     });
     var preloadTxt = (F_Mmax <= F_Mzul)
@@ -290,15 +324,17 @@
     });
 
     /* ---- R8: Zugspannung, Vergleichsspannung, Sicherheit gegen Fliessen ---- */
-    var sz = F_Smax / g.As;
+    var sz = F_Smax / A_R7;
     step({
       id: 'sigmaZ', phase: 'R8',
       titleI: { de: 'Zugspannung σ_z,max', en: 'Tensile stress σ_z,max', pt: 'Tensão de tração σ_z,max' },
-      formula: 'σ_z,max = F_Smax / A_S',
-      sub: 'σ_z,max = ' + nf(F_Smax, 0) + ' / ' + nf(g.As, 2),
+      formula: taperGov ? 'σ_z,max = F_Smax / A_0' : 'σ_z,max = F_Smax / A_S',
+      sub: 'σ_z,max = ' + nf(F_Smax, 0) + ' / ' + nf(A_R7, 2),
       result: nf(sz, 0) + ' N/mm²',
       _val: sz, _exp: R.sigma_zmax,
-      noteI: { de: 'Zugspannung im Spannungsquerschnitt A_S.', en: 'Tensile stress in the stress cross-section A_S.', pt: 'Tensão de tração na secção resistente A_S.' },
+      noteI: taperGov
+        ? { de: 'Zugspannung im Taillenquerschnitt A_0 (schwächster Querschnitt der Dehnschraube).', en: 'Tensile stress in the waist cross-section A_0 (weakest section of the waisted bolt).', pt: 'Tensão de tração na secção da cintura A_0 (secção mais fraca do parafuso de haste reduzida).' }
+        : { de: 'Zugspannung im Spannungsquerschnitt A_S.', en: 'Tensile stress in the stress cross-section A_S.', pt: 'Tensão de tração na secção resistente A_S.' },
       ref: 'VDI 2230 Bl.1 · R8'
     });
     var kTau = (inp.kTau != null) ? inp.kTau : 0.5;
@@ -328,16 +364,18 @@
 
     /* ---- R9: Dauerhaltbarkeit (nur bei schwankender Axiallast) ---- */
     if (R.fatigue && inp.F_Ao != null && inp.F_Au != null) {
-      var A0 = (inp.A0 != null) ? inp.A0 : g.As;
+      var A0 = taperGov ? A0t : ((inp.A0 != null) ? inp.A0 : g.As);
       var sa = PhiEn * (inp.F_Ao - inp.F_Au) / (2 * A0);
       step({
         id: 'sigmaA_amp', phase: 'R9',
         titleI: { de: 'Spannungsamplitude σ_a', en: 'Stress amplitude σ_a', pt: 'Amplitude de tensão σ_a' },
-        formula: 'σ_a = Φ_en·(F_Ao − F_Au) / (2·A_S)',
+        formula: taperGov ? 'σ_a = Φ_en·(F_Ao − F_Au) / (2·A_0)' : 'σ_a = Φ_en·(F_Ao − F_Au) / (2·A_S)',
         sub: 'σ_a = ' + nf(PhiEn, 4) + '·(' + nf(inp.F_Ao, 0) + ' − ' + nf(inp.F_Au, 0) + ') / (2·' + nf(A0, 2) + ')',
         result: nf(sa, 1) + ' N/mm²',
         _val: sa, _exp: R.fatigue.sigma_a,
-        noteI: { de: 'Halbe Schwingbreite der Schraubenzusatzkraft, bezogen auf A_S.', en: 'Half the swing of the additional bolt force, related to A_S.', pt: 'Metade da variação da força adicional, referida a A_S.' },
+        noteI: taperGov
+          ? { de: 'Halbe Schwingbreite der Schraubenzusatzkraft, bezogen auf den Taillenquerschnitt A_0. Die weichere Dehnschraube senkt Φ_en und damit die Zusatzkraft.', en: 'Half the swing of the additional bolt force, related to the waist section A_0. The softer waisted bolt lowers Φ_en and thus the add-on force.', pt: 'Metade da variação da força adicional, referida à secção da cintura A_0. O parafuso mais elástico reduz Φ_en e, com isso, a força adicional.' }
+          : { de: 'Halbe Schwingbreite der Schraubenzusatzkraft, bezogen auf A_S.', en: 'Half the swing of the additional bolt force, related to A_S.', pt: 'Metade da variação da força adicional, referida a A_S.' },
         ref: 'VDI 2230 Bl.1 · R9'
       });
       var sASV = 0.85 * (150 / g.d + 45);
