@@ -242,6 +242,23 @@ input.locked { background: var(--line-soft); color: var(--muted); cursor: defaul
 .status-banner.bad { background: var(--bad-soft); border-color: color-mix(in srgb, var(--bad) 40%, transparent); color: var(--bad); }
 .status-banner.idle { color: var(--muted); }
 
+/* Ergebnis-Ampel (Gesamturteil, ganz oben) — prominenter als der Status-Banner */
+.verdict-banner {
+  display: flex; align-items: center; gap: 13px; padding: 15px 18px;
+  border-radius: var(--radius-sm); margin-bottom: 16px;
+  border: 1px solid var(--line); border-left-width: 5px;
+}
+.verdict-banner .vb-dot { font-size: 22px; line-height: 1; flex: none; }
+.verdict-banner .vb-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.verdict-banner .vb-text { font-weight: 700; font-size: 16px; letter-spacing: .2px; }
+.verdict-banner .vb-note { font-size: 12px; font-weight: 500; color: var(--muted); }
+.verdict-banner.ok   { background: var(--ok-soft);   border-color: color-mix(in srgb, var(--ok) 55%, transparent);   border-left-color: var(--ok); }
+.verdict-banner.ok   .vb-text { color: var(--ok); }
+.verdict-banner.warn { background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn) 55%, transparent); border-left-color: var(--warn); }
+.verdict-banner.warn .vb-text { color: color-mix(in srgb, var(--warn) 82%, var(--fg)); }
+.verdict-banner.bad  { background: var(--bad-soft);  border-color: color-mix(in srgb, var(--bad) 55%, transparent);  border-left-color: var(--bad); }
+.verdict-banner.bad  .vb-text { color: var(--bad); }
+
 .safety-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 .safety-card {
   border: 1px solid var(--line); border-radius: var(--radius-sm);
@@ -324,8 +341,26 @@ input.locked { background: var(--line-soft); color: var(--muted); cursor: defaul
 @media print {
   body { background: #fff; color: #000; }
   .app-header, .subbar, .viz-placeholder, .help-btn { display: none !important; }
-  .app-main { grid-template-columns: 1fr; }
+  .app-main { grid-template-columns: 1fr; gap: 10px; }
   .card { box-shadow: none; border-color: #bbb; }
+  /* Ampel + Sicherheits-Punkte: Hintergrundfarben im Ausdruck/PDF erzwingen,
+     sonst druckt der Browser sie standardmäßig weiß. */
+  .verdict-banner, .safety-card, .sc-dot, .status-banner {
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .verdict-banner { border-left-width: 5px; }
+  /* Rechenweg: das <details> wird per JS (beforeprint) geöffnet; hier zusätzlich
+     absichern, dass Aufklapp-Pfeil weg ist und der Inhalt sichtbar bleibt. */
+  .rechenweg > summary { list-style: none; cursor: default; }
+  .rechenweg > summary .rw-hint { display: none; }
+  /* Saubere Seitenumbrüche: zusammengehörige Blöcke nicht zerreißen, lange
+     Container (Rechenweg) dürfen umbrechen. */
+  .verdict-banner, .safety-grid, .kv-table, .improve-box, .schaubild, .sb-vals { break-inside: avoid; }
+  .rw-step { break-inside: avoid; }
+  .rw-body { display: block !important; }
+  /* Schaubild vollständig und nicht überbreit auf die Seite bringen */
+  .schaubild { max-width: 100%; height: auto; }
+  .card { break-inside: auto; }
   /* Haftungs-Disclaimer + Normangabe muessen im Ausdruck/PDF sichtbar bleiben (Pflicht). */
   .app-footer { display: block !important; margin-top: 12px; padding-top: 8px;
     border-top: 1px solid #bbb; font-size: 10px; line-height: 1.4; color: #333;

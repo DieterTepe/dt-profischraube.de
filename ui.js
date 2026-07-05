@@ -36,6 +36,24 @@
     if (!obj.input || typeof obj.input !== 'object' || Array.isArray(obj.input)) return { ok: false, code: 'DT_FORMAT' };
     return { ok: true, payload: obj };
   }
+  /* Ergebnis-Ampel: Gesamturteil aus den fünf Sicherheiten (S_F, S_D, S_P, S_G, S_A).
+   * Rein und ohne DOM → in Node testbar. Eingabe: Array aus Zahlen bzw. null/NaN (n.b.).
+   * Regeln (deckungsgleich mit safetyClass): mind. eine < 1,0 → 'bad'; sonst mind. eine
+   * 1,0…<1,2 → 'warn'; sonst wenn ein Nachweis nicht geführt wurde (n.b.) → 'warn' mit
+   * Vorbehalt (nie fälschlich 'ok'); sonst alle ≥ 1,2 → 'ok'. */
+  function overallVerdict(safeties) {
+    var hasBad = false, hasWarn = false, hasNb = false, hasAny = false;
+    for (var i = 0; i < safeties.length; i++) {
+      var s = safeties[i];
+      if (s == null || typeof s !== 'number' || !isFinite(s)) { hasNb = true; continue; }
+      hasAny = true;
+      if (s < 1.0) hasBad = true;
+      else if (s < 1.2) hasWarn = true;
+    }
+    var level = hasBad ? 'bad' : ((hasWarn || hasNb) ? 'warn' : 'ok');
+    return { level: level, hasNb: hasNb, hasAny: hasAny };
+  }
+
   function dtFileName(label, date) {
     var d = (date instanceof Date) ? date : new Date();
     var pad = function (n) { return (n < 10 ? '0' : '') + n; };
@@ -45,7 +63,7 @@
   }
   /* Node (Testharness): nur die reinen Helfer exportieren, kein DOM-Code. */
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { dtSerialize: dtSerialize, dtParse: dtParse, dtFileName: dtFileName, DT_APP: DT_APP };
+    module.exports = { dtSerialize: dtSerialize, dtParse: dtParse, dtFileName: dtFileName, DT_APP: DT_APP, overallVerdict: overallVerdict };
   }
   if (typeof window === 'undefined') return;
 
@@ -72,6 +90,7 @@
       grp_Schraube: 'Schraube & Werkstoff', grp_Anziehen: 'Reibung & Anziehen', grp_Geometrie: 'Verbindung & Geometrie',
       grp_Belastung: 'Belastung', grp_Setzen: 'Setzen & Trennflächen', grp_Nachweise: 'Nachweise & Optionen',
       statusOk: 'Berechnung vollständig.', statusInvalid: 'Eingaben unvollständig oder ungültig — bitte korrigieren.',
+      verdictOk: 'Verbindung ausreichend dimensioniert', verdictWarn: 'Verbindung knapp bemessen', verdictBad: 'Verbindung nicht ausreichend', verdictNbNote: 'nicht alle Nachweise geführt (n. b.) — Urteil unter Vorbehalt', printBtn: 'Drucken / PDF', printTitle: 'Bericht drucken oder als PDF speichern',
       kvCaption: 'Weitere Kennwerte', kvEngage: 'R11 – Mindesteinschraubtiefe', recommended: 'empfohlen', nb: 'n. b.', customOpt: '— eigene Eingabe —', rmHintPrefix: 'Richtwert', rmHintCustom: 'eigener Wert',
       tagWarn: 'Grenze', tagAssume: 'Annahme', tagPending: 'offen', tagFix: 'Tipp',
       improveTitle: 'So wird die Ampel grün (Zielwert S ≥ 1,2):', improveCoupling: 'Danach die übrigen Nachweise erneut prüfen — die Sicherheiten hängen zusammen.',
@@ -98,6 +117,7 @@
       grp_Schraube: 'Bolt & material', grp_Anziehen: 'Friction & tightening', grp_Geometrie: 'Joint & geometry',
       grp_Belastung: 'Loading', grp_Setzen: 'Embedding & interfaces', grp_Nachweise: 'Verifications & options',
       statusOk: 'Calculation complete.', statusInvalid: 'Input incomplete or invalid — please correct.',
+      verdictOk: 'Joint adequately dimensioned', verdictWarn: 'Joint marginally dimensioned', verdictBad: 'Joint not adequate', verdictNbNote: 'not all verifications performed (n/a) — verdict provisional', printBtn: 'Print / PDF', printTitle: 'Print the report or save as PDF',
       kvCaption: 'Further values', kvEngage: 'R11 – minimum length of engagement', recommended: 'recommended', nb: 'n/a', customOpt: '— custom input —', rmHintPrefix: 'Guide value', rmHintCustom: 'custom value',
       tagWarn: 'limit', tagAssume: 'assumption', tagPending: 'open', tagFix: 'tip',
       improveTitle: 'How to turn the indicator green (target S ≥ 1.2):', improveCoupling: 'Then re-check the other verifications — the safety factors are coupled.',
@@ -124,6 +144,7 @@
       grp_Schraube: 'Parafuso e material', grp_Anziehen: 'Atrito e aperto', grp_Geometrie: 'União e geometria',
       grp_Belastung: 'Carregamento', grp_Setzen: 'Assentamento e interfaces', grp_Nachweise: 'Verificações e opções',
       statusOk: 'Cálculo completo.', statusInvalid: 'Entrada incompleta ou inválida — corrija.',
+      verdictOk: 'Junção adequadamente dimensionada', verdictWarn: 'Junção no limite', verdictBad: 'Junção insuficiente', verdictNbNote: 'nem todas as verificações realizadas (n/a) — parecer provisório', printBtn: 'Imprimir / PDF', printTitle: 'Imprimir o relatório ou salvar como PDF',
       kvCaption: 'Outros valores', kvEngage: 'R11 – profundidade mínima de aperto', recommended: 'recomendado', nb: 'n/d', customOpt: '— entrada própria —', rmHintPrefix: 'Valor indicativo', rmHintCustom: 'valor próprio',
       tagWarn: 'limite', tagAssume: 'suposição', tagPending: 'pendente', tagFix: 'dica',
       improveTitle: 'Como tornar o indicador verde (alvo S ≥ 1,2):', improveCoupling: 'Depois, reavalie as outras verificações — os fatores de segurança estão acoplados.',
@@ -687,9 +708,32 @@
     return c;
   }
 
+  function verdictBanner(v) {
+    var sym = v.level === 'ok' ? '🟢' : (v.level === 'warn' ? '🟡' : '🔴');
+    var txtKey = v.level === 'ok' ? 'verdictOk' : (v.level === 'warn' ? 'verdictWarn' : 'verdictBad');
+    var b = el('div', 'verdict-banner ' + v.level);
+    b.appendChild(el('span', 'vb-dot', sym));
+    var body = el('div', 'vb-body');
+    body.appendChild(el('span', 'vb-text', t(txtKey)));
+    // n.b.-Vorbehalt nur zeigen, wenn das Urteil sonst grün/gelb wäre (nicht bei rot,
+    // dort ist die Aussage ohnehin negativ)
+    if (v.hasNb && v.level !== 'bad') body.appendChild(el('span', 'vb-note', t('verdictNbNote')));
+    b.appendChild(body);
+    return b;
+  }
+
   function renderResults(R) {
     var host = $('resultHost'); host.innerHTML = '';
-    host.appendChild(banner('ok', t('statusOk')));
+
+    // Ergebnis-Ampel (Gesamturteil) ganz oben — auch im Druck/Bericht das Erste
+    var safeties = [
+      R.S_F,
+      R.fatigue ? R.fatigue.S_D : null,
+      R.pressure ? R.pressure.S_P : null,
+      R.slip ? R.slip.S_G : null,
+      R.engagement ? R.engagement.S_A : null
+    ];
+    host.appendChild(verdictBanner(overallVerdict(safeties)));
 
     // Sicherheiten
     var grid = el('div', 'safety-grid');
@@ -961,6 +1005,8 @@
     for (var i = 0; i < nodes.length; i++) { var key = nodes[i].getAttribute('data-i18n'); nodes[i].textContent = t(key).replace('{v}', engineVer); }
     var phs = document.querySelectorAll('[data-i18n-ph]');
     for (var q = 0; q < phs.length; q++) phs[q].setAttribute('placeholder', t(phs[q].getAttribute('data-i18n-ph')));
+    var tis = document.querySelectorAll('[data-i18n-title]');
+    for (var ti = 0; ti < tis.length; ti++) tis[ti].setAttribute('title', t(tis[ti].getAttribute('data-i18n-title')));
     // Presetliste (customOpt) + Empfehlungs-Suffix neu, ohne Auswahl zu verlieren
     var cur = $('presetSel').value; fillPresetSelect(); $('presetSel').value = cur;
     var btns = document.querySelectorAll('#langSwitch .lang-btn');
@@ -996,6 +1042,20 @@
     on('presetSel', 'change', function () { if (this.value) loadPreset(this.value); });
     on('saveBtn', 'click', saveDT);
     on('loadBtn', 'click', function () { var f = $('dtFile'); if (f) f.click(); });
+    on('printBtn', 'click', function () { window.print(); });
+    // Vor dem Druck alle <details> (Rechenweg) aufklappen, damit sie vollständig im
+    // PDF/Ausdruck erscheinen; danach den vorherigen Zustand wiederherstellen. Über die
+    // Events greift das auch bei Strg+P, nicht nur über den Knopf.
+    var _printRestore = [];
+    window.addEventListener('beforeprint', function () {
+      _printRestore = [];
+      var ds = document.querySelectorAll('details');
+      for (var i = 0; i < ds.length; i++) { _printRestore.push([ds[i], ds[i].open]); ds[i].open = true; }
+    });
+    window.addEventListener('afterprint', function () {
+      for (var i = 0; i < _printRestore.length; i++) _printRestore[i][0].open = _printRestore[i][1];
+      _printRestore = [];
+    });
     on('dtFile', 'change', function () { if (this.files && this.files[0]) loadDTFile(this.files[0]); this.value = ''; });
 
     // Startbeispiel laden (validiertes M12-Beispiel), damit sofort etwas Sinnvolles steht

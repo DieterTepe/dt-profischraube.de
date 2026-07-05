@@ -1330,6 +1330,60 @@ ok(DATA.PRESETS.grauguss_esv_m12.input.p_G === DATA.TAU_RATIO.gjl.pG, 'Demo-Pres
   ok(/A_S/.test(stepsB.filter(function (st) { return st.id === 'FMzul'; })[0].formula), 'Taille RW: Fallback zeigt A_S-Formel');
 })();
 
+/* === 21 · Ergebnis-Ampel — overallVerdict (Ausgabe Schritt A, v4.9) ======== */
+(function () {
+  var U = require('./ui.js');
+  ok(typeof U.overallVerdict === 'function', 'Ampel: overallVerdict aus ui.js exportiert (reine Funktion, kein DOM)');
+  var V = function (arr) { return U.overallVerdict(arr); };
+
+  // Grün: alle fünf >= 1,2, kein n.b.
+  var g = V([1.8, 1.5, 1.2, 2.0, 1.35]);
+  ok(g.level === 'ok' && g.hasNb === false && g.hasAny === true, 'Ampel: alle >= 1,2 -> grün');
+  // Grenzwert 1,2 zählt als grün (deckungsgleich mit safetyClass)
+  ok(V([1.2, 1.2, 1.2, 1.2, 1.2]).level === 'ok', 'Ampel: exakt 1,2 -> grün (Grenzwert)');
+  // Gelb: mind. eine zwischen 1,0 und <1,2
+  ok(V([1.8, 1.1, 1.5, 2.0, 1.35]).level === 'warn', 'Ampel: eine 1,0…<1,2 -> gelb');
+  // Grenzwert 1,0 zählt als gelb (nicht rot)
+  ok(V([1.0, 1.5, 1.5, 1.5, 1.5]).level === 'warn', 'Ampel: exakt 1,0 -> gelb (Grenzwert)');
+  // knapp unter 1,2 -> gelb
+  ok(V([1.199, 1.5, 1.5, 1.5, 1.5]).level === 'warn', 'Ampel: 1,199 -> gelb');
+  // Rot: mind. eine < 1,0
+  ok(V([1.8, 0.9, 1.5, 2.0, 1.35]).level === 'bad', 'Ampel: eine < 1,0 -> rot');
+  ok(V([0.999, 1.5, 1.5, 1.5, 1.5]).level === 'bad', 'Ampel: 0,999 -> rot');
+
+  // n.b. (null) zieht ein sonst grünes Urteil auf gelb mit Vorbehalt — nie fälschlich grün
+  var nb = V([1.8, null, 1.5, 2.0, 1.35]);
+  ok(nb.level === 'warn' && nb.hasNb === true, 'Ampel: ein Nachweis n.b. -> gelb mit Vorbehalt (nie grün)');
+  // n.b. macht aus gelb nicht rot
+  ok(V([1.8, null, 1.1, 2.0, 1.35]).level === 'warn', 'Ampel: n.b. + gelb bleibt gelb');
+  // rot dominiert n.b.
+  var bad = V([0.8, null, 1.5, 2.0, 1.35]);
+  ok(bad.level === 'bad' && bad.hasNb === true, 'Ampel: rot dominiert n.b. (hasNb bleibt gesetzt)');
+  // NaN und Infinity werden wie n.b. behandelt
+  ok(V([NaN, 1.5, 1.5, 1.5, 1.5]).hasNb === true, 'Ampel: NaN gilt als n.b.');
+  ok(V([Infinity, 1.5, 1.5, 1.5, 1.5]).hasNb === true, 'Ampel: Infinity gilt als n.b.');
+  // alle n.b. -> gelb, hasAny false (nie grün, wenn nichts geführt wurde)
+  var allNb = V([null, null, null, null, null]);
+  ok(allNb.level === 'warn' && allNb.hasNb === true && allNb.hasAny === false, 'Ampel: alle n.b. -> gelb, hasAny=false');
+
+  // Konsistenz mit echten Presets: das Urteil entsteht genau aus den fünf Solver-Sicherheiten
+  Object.keys(DATA.PRESETS).forEach(function (key) {
+    var R = S.computeJoint(DATA.PRESETS[key].input);
+    if (R.status !== 'ok') return;
+    var arr = [R.S_F, R.fatigue ? R.fatigue.S_D : null, R.pressure ? R.pressure.S_P : null,
+      R.slip ? R.slip.S_G : null, R.engagement ? R.engagement.S_A : null];
+    var v = V(arr);
+    ok(v.level === 'ok' || v.level === 'warn' || v.level === 'bad', 'Ampel: Preset ' + key + ' liefert gültiges Urteil');
+    // manuelle Gegenprobe der Dominanz-Regel
+    var anyBad = arr.some(function (s) { return typeof s === 'number' && isFinite(s) && s < 1.0; });
+    var anyWarn = arr.some(function (s) { return typeof s === 'number' && isFinite(s) && s >= 1.0 && s < 1.2; });
+    var anyNb = arr.some(function (s) { return !(typeof s === 'number' && isFinite(s)); });
+    var exp = anyBad ? 'bad' : ((anyWarn || anyNb) ? 'warn' : 'ok');
+    ok(v.level === exp, 'Ampel: Preset ' + key + ' Urteil == unabhängige Gegenprobe (' + exp + ')');
+    ok(v.hasNb === anyNb, 'Ampel: Preset ' + key + ' hasNb korrekt');
+  });
+})();
+
 /* === Report ============================================================== */
 console.log('\n  A_S  berechnet  vs.  tabelliert (ISO 898-1)');
 console.log('  ---------------------------------------------');
