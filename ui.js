@@ -42,16 +42,21 @@
    * 1,0…<1,2 → 'warn'; sonst wenn ein Nachweis nicht geführt wurde (n.b.) → 'warn' mit
    * Vorbehalt (nie fälschlich 'ok'); sonst alle ≥ 1,2 → 'ok'. */
   function overallVerdict(safeties) {
-    var hasBad = false, hasWarn = false, hasNb = false, hasAny = false;
+    var items = [], hasBad = false, hasWarn = false, hasNb = false, hasAny = false;
     for (var i = 0; i < safeties.length; i++) {
-      var s = safeties[i];
-      if (s == null || typeof s !== 'number' || !isFinite(s)) { hasNb = true; continue; }
-      hasAny = true;
-      if (s < 1.0) hasBad = true;
-      else if (s < 1.2) hasWarn = true;
+      var s = safeties[i], st;
+      if (s == null || typeof s !== 'number' || !isFinite(s)) { st = 'nb'; hasNb = true; }
+      else {
+        hasAny = true;
+        if (s < 1.0) { st = 'bad'; hasBad = true; }
+        else if (s < 1.2) { st = 'warn'; hasWarn = true; }
+        else st = 'ok';
+      }
+      items.push(st);
     }
     var level = hasBad ? 'bad' : ((hasWarn || hasNb) ? 'warn' : 'ok');
-    return { level: level, hasNb: hasNb, hasAny: hasAny };
+    // onlyNb = gelb allein wegen nicht geführter Nachweise (alle geführten sind grün)
+    return { level: level, hasNb: hasNb, hasAny: hasAny, hasWarn: hasWarn, onlyNb: (level === 'warn' && !hasWarn && !hasBad), items: items };
   }
 
   function dtFileName(label, date) {
@@ -90,7 +95,7 @@
       grp_Schraube: 'Schraube & Werkstoff', grp_Anziehen: 'Reibung & Anziehen', grp_Geometrie: 'Verbindung & Geometrie',
       grp_Belastung: 'Belastung', grp_Setzen: 'Setzen & Trennflächen', grp_Nachweise: 'Nachweise & Optionen',
       statusOk: 'Berechnung vollständig.', statusInvalid: 'Eingaben unvollständig oder ungültig — bitte korrigieren.',
-      verdictOk: 'Verbindung ausreichend dimensioniert', verdictWarn: 'Verbindung knapp bemessen', verdictBad: 'Verbindung nicht ausreichend', verdictNbNote: 'nicht alle Nachweise geführt (n. b.) — Urteil unter Vorbehalt', printBtn: 'Drucken / PDF', printTitle: 'Bericht drucken oder als PDF speichern',
+      verdictOk: 'Verbindung ausreichend dimensioniert', verdictWarn: 'Verbindung knapp bemessen', verdictBad: 'Verbindung nicht ausreichend', verdictOkNb: 'Verbindung ausreichend dimensioniert — nicht alle Nachweise geführt', vbBad: 'Nicht erfüllt', vbWarn: 'Knapp', vbNb: 'Nicht geführt', printBtn: 'Drucken / PDF', printTitle: 'Bericht drucken oder als PDF speichern',
       kvCaption: 'Weitere Kennwerte', kvEngage: 'R11 – Mindesteinschraubtiefe', recommended: 'empfohlen', nb: 'n. b.', customOpt: '— eigene Eingabe —', rmHintPrefix: 'Richtwert', rmHintCustom: 'eigener Wert',
       tagWarn: 'Grenze', tagAssume: 'Annahme', tagPending: 'offen', tagFix: 'Tipp',
       improveTitle: 'So wird die Ampel grün (Zielwert S ≥ 1,2):', improveCoupling: 'Danach die übrigen Nachweise erneut prüfen — die Sicherheiten hängen zusammen.',
@@ -117,7 +122,7 @@
       grp_Schraube: 'Bolt & material', grp_Anziehen: 'Friction & tightening', grp_Geometrie: 'Joint & geometry',
       grp_Belastung: 'Loading', grp_Setzen: 'Embedding & interfaces', grp_Nachweise: 'Verifications & options',
       statusOk: 'Calculation complete.', statusInvalid: 'Input incomplete or invalid — please correct.',
-      verdictOk: 'Joint adequately dimensioned', verdictWarn: 'Joint marginally dimensioned', verdictBad: 'Joint not adequate', verdictNbNote: 'not all verifications performed (n/a) — verdict provisional', printBtn: 'Print / PDF', printTitle: 'Print the report or save as PDF',
+      verdictOk: 'Joint adequately dimensioned', verdictWarn: 'Joint marginally dimensioned', verdictBad: 'Joint not adequate', verdictOkNb: 'Joint adequately dimensioned — not all verifications performed', vbBad: 'Not met', vbWarn: 'Marginal', vbNb: 'Not performed', printBtn: 'Print / PDF', printTitle: 'Print the report or save as PDF',
       kvCaption: 'Further values', kvEngage: 'R11 – minimum length of engagement', recommended: 'recommended', nb: 'n/a', customOpt: '— custom input —', rmHintPrefix: 'Guide value', rmHintCustom: 'custom value',
       tagWarn: 'limit', tagAssume: 'assumption', tagPending: 'open', tagFix: 'tip',
       improveTitle: 'How to turn the indicator green (target S ≥ 1.2):', improveCoupling: 'Then re-check the other verifications — the safety factors are coupled.',
@@ -144,7 +149,7 @@
       grp_Schraube: 'Parafuso e material', grp_Anziehen: 'Atrito e aperto', grp_Geometrie: 'União e geometria',
       grp_Belastung: 'Carregamento', grp_Setzen: 'Assentamento e interfaces', grp_Nachweise: 'Verificações e opções',
       statusOk: 'Cálculo completo.', statusInvalid: 'Entrada incompleta ou inválida — corrija.',
-      verdictOk: 'Junção adequadamente dimensionada', verdictWarn: 'Junção no limite', verdictBad: 'Junção insuficiente', verdictNbNote: 'nem todas as verificações realizadas (n/a) — parecer provisório', printBtn: 'Imprimir / PDF', printTitle: 'Imprimir o relatório ou salvar como PDF',
+      verdictOk: 'Junção adequadamente dimensionada', verdictWarn: 'Junção no limite', verdictBad: 'Junção insuficiente', verdictOkNb: 'Junção adequadamente dimensionada — nem todas as verificações realizadas', vbBad: 'Não cumprido', vbWarn: 'No limite', vbNb: 'Não realizado', printBtn: 'Imprimir / PDF', printTitle: 'Imprimir o relatório ou salvar como PDF',
       kvCaption: 'Outros valores', kvEngage: 'R11 – profundidade mínima de aperto', recommended: 'recomendado', nb: 'n/d', customOpt: '— entrada própria —', rmHintPrefix: 'Valor indicativo', rmHintCustom: 'valor próprio',
       tagWarn: 'limite', tagAssume: 'suposição', tagPending: 'pendente', tagFix: 'dica',
       improveTitle: 'Como tornar o indicador verde (alvo S ≥ 1,2):', improveCoupling: 'Depois, reavalie as outras verificações — os fatores de segurança estão acoplados.',
@@ -708,16 +713,42 @@
     return c;
   }
 
-  function verdictBanner(v) {
+  function verdictBanner(v, meta) {
     var sym = v.level === 'ok' ? '🟢' : (v.level === 'warn' ? '🟡' : '🔴');
-    var txtKey = v.level === 'ok' ? 'verdictOk' : (v.level === 'warn' ? 'verdictWarn' : 'verdictBad');
+    // Text: bei gelb allein wegen n.b. beruhigend formulieren (kein „knapp bemessen")
+    var txtKey = v.level === 'ok' ? 'verdictOk'
+      : (v.level === 'bad' ? 'verdictBad'
+        : (v.onlyNb ? 'verdictOkNb' : 'verdictWarn'));
     var b = el('div', 'verdict-banner ' + v.level);
     b.appendChild(el('span', 'vb-dot', sym));
     var body = el('div', 'vb-body');
     body.appendChild(el('span', 'vb-text', t(txtKey)));
-    // n.b.-Vorbehalt nur zeigen, wenn das Urteil sonst grün/gelb wäre (nicht bei rot,
-    // dort ist die Aussage ohnehin negativ)
-    if (v.hasNb && v.level !== 'bad') body.appendChild(el('span', 'vb-note', t('verdictNbNote')));
+
+    // Konkrete Hinweise, welche Nachweise betroffen sind — nach Kategorie gebündelt,
+    // damit der Nutzer sofort sieht, dass ein gelbes/rotes Urteil oft nur an einem
+    // nicht geführten (häufig nicht nötigen) Nachweis liegt und kein Eingabefehler ist.
+    function collect(status) {
+      var out = [];
+      for (var i = 0; i < v.items.length; i++) {
+        if (v.items[i] !== status) continue;
+        var m = meta[i];
+        if (status === 'nb') out.push(m.key + ' ' + m.sub + (m.na ? ': ' + m.na : ''));
+        else out.push(m.key + ' ' + m.sub + ' ' + fmt(m.val, 2));
+      }
+      return out;
+    }
+    function addLine(status, labelKey) {
+      var list = collect(status);
+      if (!list.length) return;
+      var line = el('div', 'vb-note');
+      line.appendChild(el('span', 'vb-cat', t(labelKey) + ':'));
+      line.appendChild(document.createTextNode(' ' + list.join(' · ')));
+      body.appendChild(line);
+    }
+    addLine('bad', 'vbBad');
+    addLine('warn', 'vbWarn');
+    addLine('nb', 'vbNb');
+
     b.appendChild(body);
     return b;
   }
@@ -733,7 +764,15 @@
       R.slip ? R.slip.S_G : null,
       R.engagement ? R.engagement.S_A : null
     ];
-    host.appendChild(verdictBanner(overallVerdict(safeties)));
+    // Parallel-Metadaten (gleiche Reihenfolge) für die konkreten Hinweise in der Ampel
+    var vMeta = [
+      { key: 'S_F', sub: t('sub_F'), na: null,        val: safeties[0] },
+      { key: 'S_D', sub: t('sub_D'), na: t('na_D'),   val: safeties[1] },
+      { key: 'S_P', sub: t('sub_P'), na: t('na_P'),   val: safeties[2] },
+      { key: 'S_G', sub: t('sub_G'), na: t('na_G'),   val: safeties[3] },
+      { key: 'S_A', sub: t('sub_A'), na: t('na_A'),   val: safeties[4] }
+    ];
+    host.appendChild(verdictBanner(overallVerdict(safeties), vMeta));
 
     // Sicherheiten
     var grid = el('div', 'safety-grid');

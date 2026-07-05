@@ -251,7 +251,10 @@ input.locked { background: var(--line-soft); color: var(--muted); cursor: defaul
 .verdict-banner .vb-dot { font-size: 22px; line-height: 1; flex: none; }
 .verdict-banner .vb-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .verdict-banner .vb-text { font-weight: 700; font-size: 16px; letter-spacing: .2px; }
-.verdict-banner .vb-note { font-size: 12px; font-weight: 500; color: var(--muted); }
+.verdict-banner .vb-note { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-top: 3px; line-height: 1.45; }
+.verdict-banner .vb-cat { font-weight: 700; }
+.verdict-banner.bad  .vb-cat { color: var(--bad); }
+.verdict-banner.warn .vb-cat { color: color-mix(in srgb, var(--warn) 82%, var(--fg)); }
 .verdict-banner.ok   { background: var(--ok-soft);   border-color: color-mix(in srgb, var(--ok) 55%, transparent);   border-left-color: var(--ok); }
 .verdict-banner.ok   .vb-text { color: var(--ok); }
 .verdict-banner.warn { background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn) 55%, transparent); border-left-color: var(--warn); }

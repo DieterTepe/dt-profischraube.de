@@ -1366,6 +1366,24 @@ ok(DATA.PRESETS.grauguss_esv_m12.input.p_G === DATA.TAU_RATIO.gjl.pG, 'Demo-Pres
   var allNb = V([null, null, null, null, null]);
   ok(allNb.level === 'warn' && allNb.hasNb === true && allNb.hasAny === false, 'Ampel: alle n.b. -> gelb, hasAny=false');
 
+  // items: Einzel-Klassifizierung pro Sicherheit (für die konkreten Ampel-Hinweise)
+  var it = V([1.5, 0.9, 1.1, null, 1.3]);
+  ok(it.items.length === 5, 'Ampel: items hat fünf Einträge');
+  ok(it.items[0] === 'ok' && it.items[1] === 'bad' && it.items[2] === 'warn' && it.items[3] === 'nb' && it.items[4] === 'ok',
+    'Ampel: items klassifiziert ok/bad/warn/nb korrekt in Reihenfolge');
+
+  // onlyNb: gelb NUR wegen nicht geführter Nachweise (alle geführten grün) -> beruhigender Text
+  var onb = V([1.5, 1.5, 1.5, null, 1.5]);
+  ok(onb.level === 'warn' && onb.onlyNb === true, 'Ampel: alle geführten grün + ein n.b. -> onlyNb=true');
+  // echte gelbe Sicherheit -> onlyNb=false (echtes „knapp bemessen")
+  ok(V([1.5, 1.1, 1.5, null, 1.5]).onlyNb === false, 'Ampel: echte 1,0…<1,2 -> onlyNb=false');
+  // grün ohne n.b. -> onlyNb=false, hasWarn=false
+  var allok = V([1.5, 1.5, 1.5, 1.5, 1.5]);
+  ok(allok.onlyNb === false && allok.hasWarn === false, 'Ampel: alle grün -> onlyNb=false, hasWarn=false');
+  // rot -> onlyNb immer false
+  ok(V([0.8, 1.5, 1.5, null, 1.5]).onlyNb === false, 'Ampel: rot -> onlyNb=false');
+  ok(V([1.5, 1.1, 1.5, 1.5, 1.5]).hasWarn === true, 'Ampel: hasWarn erkennt echte gelbe Sicherheit');
+
   // Konsistenz mit echten Presets: das Urteil entsteht genau aus den fünf Solver-Sicherheiten
   Object.keys(DATA.PRESETS).forEach(function (key) {
     var R = S.computeJoint(DATA.PRESETS[key].input);
