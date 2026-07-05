@@ -71,8 +71,8 @@
       else if (name === 'threadFinish') { note = pick(TF[v]); rec = (v === 'SV'); }
       else if (name === 'boltType') { note = pick(BT[v]); rec = (v === 'schaft'); }
       else if (name === 'surfaceFinish' && (F = DATA.SURFACE_FATIGUE[v])) { note = pick(F.label); rec = (v === 'blank'); }
-      else if (name === 'matGroupM' && (F = DATA.TAU_RATIO[v])) { note = pick(F.label) + ' · τB/Rm ' + F.ratio + (F.src && /Sch[aä]tz/.test(F.src) ? ' · Schätzwert (kein Norm-Beleg)' : ''); }
-      else if (name === 'plateMat' && (F = DATA.TAU_RATIO[v])) { note = pick(F.label) + ' · E ' + F.E + ' · p_G ' + F.pG + ' N/mm²' + (F.src && /Sch[aä]tz/.test(F.src) ? ' · p_G Schätzwert' : ''); }
+      else if (name === 'matGroupM' && (F = DATA.TAU_RATIO[v])) { note = pick(F.label) + ' · τB/Rm ' + F.ratio + (F.src && /Sch[aä]tz/.test(F.src) ? ' · ' + pick({ de: 'Schätzwert (kein Norm-Beleg)', en: 'estimate (no standard reference)', pt: 'valor estimado (sem referência normativa)' }) : ''); }
+      else if (name === 'plateMat' && (F = DATA.TAU_RATIO[v])) { note = pick(F.label) + ' · E ' + F.E + ' · p_G ' + F.pG + ' N/mm²' + (F.src && /Sch[aä]tz/.test(F.src) ? ' · ' + pick({ de: 'p_G Schätzwert', en: 'p_G is an estimate', pt: 'p_G valor estimado' }) : ''); }
       else if (name === 'rz' && DATA.SETTLING[v]) { note = pick(RZ); }
       out.push({ value: v, label: v, note: note, recommended: rec });
     }

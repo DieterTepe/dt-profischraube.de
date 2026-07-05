@@ -633,7 +633,7 @@
     var F_Ao = (inp.F_Ao != null) ? inp.F_Ao : F_A;
     var F_SAmax = PhiEn * F_Ao;
     var F_Smax = maxBoltForce({ F_Mzul: F_Mzul, F_SAmax: F_SAmax, deltaFvth: deltaFvth });
-    var F_Vmax = F_Mzul - F_Z - deltaFvth; // fuer Flaechenpressung Betriebszustand
+    var F_Vmax = F_Mzul - F_Z - deltaFvth; // max. Restvorspannkraft (Info/Ausgabe; R10-Betrieb nutzt konservativ F_Smax)
     var kTau = (inp.kTau != null) ? inp.kTau : 0.5;
     notes.assumptions.push({ code: 'ASSUME_KTAU', kTau: kTau, text: 'Torsions-Restfaktor k_tau = ' + kTau + ' im Betrieb' });
     var tauResidual = kTau * (threadTorque({ F_M: F_Mzul, P: g.P, d2: g.d2, muG: muG }) / pp.W_p);
@@ -770,10 +770,19 @@
       var mErf = SAFE_TARGET * R.engagement.m_min + R.engagement.m_zu;
       out.push({ safety: 'S_A', level: lvl(R.engagement.S_A), code: 'FIX_SA', v: { m: mErf, mNow: R.engagement.m_vorh } });
     }
-    // S_G Reibschluss: mu_T,erf = mu_T*1,2/S_G ; F_Qmax,zul = F_Qmax*S_G/1,2
+    // S_G Reibschluss: mu_T,erf = mu_T*1,2/S_G (exakt, da BEIDE F_KQerf-Terme ~1/mu_T
+    // skalieren). Der Querkraft-Zielwert muss den vom F_Qmax UNABHAENGIGEN Momenten-
+    // Term t2 = M_Ymax/(q_M*r_a*mu_T) abziehen: F_Qmax,zul = (F_KR/1,2 - t2)*q_F*mu_T.
+    // (Ohne M_Ymax identisch zur frueheren Form F_Qmax*S_G/1,2.) Bei F_KR <= 0 (S_G = 0)
+    // gibt es keine endlichen Zielwerte -> mu = null, fq = 0 (Hebel ist dann F_Kerf).
     if (R.slip && need(R.slip.S_G)) {
-      var muErf = R.slip.muT * (SAFE_TARGET / R.slip.S_G);
-      var fqZul = R.slip.F_Qmax * (R.slip.S_G / SAFE_TARGET);
+      var muErf = (R.slip.S_G > 0) ? R.slip.muT * (SAFE_TARGET / R.slip.S_G) : null;
+      var t2my = 0;
+      if (inp.M_Ymax != null && inp.M_Ymax > 0 && inp.qM >= 1 && inp.ra > 0) {
+        t2my = inp.M_Ymax / (inp.qM * inp.ra * R.slip.muT);
+      }
+      var fqZul = (R.slip.F_KR / SAFE_TARGET - t2my) * R.slip.qF * R.slip.muT;
+      if (!(fqZul > 0)) fqZul = 0;
       out.push({ safety: 'S_G', level: lvl(R.slip.S_G), code: 'FIX_SG', v: { mu: muErf, muNow: R.slip.muT, fq: fqZul, fqNow: R.slip.F_Qmax } });
     }
     // S_D Dauerfestigkeit: Ausschlaglast um Faktor S_D/1,2 senken; SG/blank als Optionen

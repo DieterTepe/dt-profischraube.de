@@ -68,7 +68,7 @@
       inputTitle: 'Eingabe', resultTitle: 'Ergebnis', vizTitle: 'Visualisierung',
       vizSoon: 'Verspannungsschaubild & Querschnitt', vizSoon2: 'Wird nach der Berechnung angezeigt.',
       resultIdle: 'Werte eingeben und „Berechnen" wählen.',
-      footNote: 'Engine v0.8.0 · Berechnung ohne Gewähr, vor Produktivnutzung gegen die Originalnorm prüfen.',
+      footNote: 'Engine {v} · Berechnung ohne Gewähr, vor Produktivnutzung gegen die Originalnorm prüfen.',
       grp_Schraube: 'Schraube & Werkstoff', grp_Anziehen: 'Reibung & Anziehen', grp_Geometrie: 'Verbindung & Geometrie',
       grp_Belastung: 'Belastung', grp_Setzen: 'Setzen & Trennflächen', grp_Nachweise: 'Nachweise & Optionen',
       statusOk: 'Berechnung vollständig.', statusInvalid: 'Eingaben unvollständig oder ungültig — bitte korrigieren.',
@@ -94,7 +94,7 @@
       inputTitle: 'Input', resultTitle: 'Result', vizTitle: 'Visualisation',
       vizSoon: 'Joint diagram & cross-section', vizSoon2: 'Shown after the calculation.',
       resultIdle: 'Enter values and choose “Calculate”.',
-      footNote: 'Engine v0.8.0 · No warranty; verify against the original standard before production use.',
+      footNote: 'Engine {v} · No warranty; verify against the original standard before production use.',
       grp_Schraube: 'Bolt & material', grp_Anziehen: 'Friction & tightening', grp_Geometrie: 'Joint & geometry',
       grp_Belastung: 'Loading', grp_Setzen: 'Embedding & interfaces', grp_Nachweise: 'Verifications & options',
       statusOk: 'Calculation complete.', statusInvalid: 'Input incomplete or invalid — please correct.',
@@ -120,7 +120,7 @@
       inputTitle: 'Entrada', resultTitle: 'Resultado', vizTitle: 'Visualização',
       vizSoon: 'Diagrama de aperto e secção', vizSoon2: 'Apresentado após o cálculo.',
       resultIdle: 'Introduza valores e escolha “Calcular”.',
-      footNote: 'Engine v0.8.0 · Sem garantia; verifique com a norma original antes de uso produtivo.',
+      footNote: 'Engine {v} · Sem garantia; verifique com a norma original antes de uso produtivo.',
       grp_Schraube: 'Parafuso e material', grp_Anziehen: 'Atrito e aperto', grp_Geometrie: 'União e geometria',
       grp_Belastung: 'Carregamento', grp_Setzen: 'Assentamento e interfaces', grp_Nachweise: 'Verificações e opções',
       statusOk: 'Cálculo completo.', statusInvalid: 'Entrada incompleta ou inválida — corrija.',
@@ -308,7 +308,7 @@
     $('modalTitle').textContent = 'DT-ProfiSchraube';
     var b = $('modalBody'); b.innerHTML = '';
     b.appendChild(el('p', null, t('tagline') + '.'));
-    b.appendChild(el('p', null, t('footNote')));
+    b.appendChild(el('p', null, t('footNote').replace('{v}', 'v' + String(SOLVER.VERSION || '').replace('-engine', ''))));
     b.appendChild(el('p', null, t('thrNote')));
     openModal();
   }
@@ -472,6 +472,11 @@
       if (v.hasSurf) surfOpt = (lang === 'en') ? ' Option: use a plain (non-galvanized/non-HV) bolt.' : (lang === 'pt') ? ' Opção: usar parafuso liso (sem galvanização/HV).' : ' Option: blanke Ausführung (statt feuerverzinkt/HV) wählen.';
     }
     var tpl = (HINT[h.code] && (HINT[h.code][lang] || HINT[h.code].de)) || '';
+    // FIX_SG ohne endlichen mu-Zielwert (F_KR <= 0): die eingeklammerte
+    // µ_T-Klausel entfernen (greift in allen drei Sprachen; kein "Infinity").
+    if (h.code === 'FIX_SG' && (v.mu == null || !isFinite(v.mu))) {
+      tpl = tpl.replace(/\s*\([^()]*\{mu\}[^()]*\)/, '');
+    }
     return tpl
       .replace('{dwNow}', v.dwNow != null ? fmt(v.dwNow, 1) : '')
       .replace('{dw}', v.dw != null ? fmt(v.dw, 1) : '')
@@ -952,7 +957,8 @@
     var snap = hadForm ? snapshotForm() : null;
     if (hadForm) { buildForm(); restoreForm(snap); }   // Feldtexte/Optionen in neuer Sprache, Werte bleiben
     var nodes = document.querySelectorAll('[data-i18n]');
-    for (var i = 0; i < nodes.length; i++) { var key = nodes[i].getAttribute('data-i18n'); nodes[i].textContent = t(key); }
+    var engineVer = 'v' + String(SOLVER.VERSION || '').replace('-engine', '');
+    for (var i = 0; i < nodes.length; i++) { var key = nodes[i].getAttribute('data-i18n'); nodes[i].textContent = t(key).replace('{v}', engineVer); }
     var phs = document.querySelectorAll('[data-i18n-ph]');
     for (var q = 0; q < phs.length; q++) phs[q].setAttribute('placeholder', t(phs[q].getAttribute('data-i18n-ph')));
     // Presetliste (customOpt) + Empfehlungs-Suffix neu, ohne Auswahl zu verlieren
