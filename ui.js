@@ -75,6 +75,7 @@
   var DATA = window.DTSData, VALID = window.DTSValidate, SOLVER = window.DTSSolver;
   var RECHENWEG = window.DTSRechenweg || null;
   var SCHAUBILD = window.DTSSchaubild || null;
+  var REPORT = window.DTSReport || null;
   if (!DATA || !VALID || !SOLVER) {
     document.getElementById('resultHost').innerHTML =
       '<div class="status-banner bad">Module nicht geladen (daten.js / validate.js / solver.js).</div>';
@@ -95,7 +96,7 @@
       grp_Schraube: 'Schraube & Werkstoff', grp_Anziehen: 'Reibung & Anziehen', grp_Geometrie: 'Verbindung & Geometrie',
       grp_Belastung: 'Belastung', grp_Setzen: 'Setzen & Trennflächen', grp_Nachweise: 'Nachweise & Optionen',
       statusOk: 'Berechnung vollständig.', statusInvalid: 'Eingaben unvollständig oder ungültig — bitte korrigieren.',
-      verdictOk: 'Verbindung ausreichend dimensioniert', verdictWarn: 'Verbindung knapp bemessen', verdictBad: 'Verbindung nicht ausreichend', verdictOkNb: 'Verbindung ausreichend dimensioniert — nicht alle Nachweise geführt', vbBad: 'Nicht erfüllt', vbWarn: 'Knapp', vbNb: 'Nicht geführt', printBtn: 'Drucken / PDF', printTitle: 'Bericht drucken oder als PDF speichern',
+      verdictOk: 'Verbindung ausreichend dimensioniert', verdictWarn: 'Verbindung knapp bemessen', verdictBad: 'Verbindung nicht ausreichend', verdictOkNb: 'Verbindung ausreichend dimensioniert — nicht alle Nachweise geführt', vbBad: 'Nicht erfüllt', vbWarn: 'Knapp', vbNb: 'Nicht geführt', printBtn: 'Drucken / PDF', printTitle: 'Bericht drucken oder als PDF speichern', rtfBtn: 'Word (.rtf)', rtfTitle: 'Bericht als Word-Dokument (.rtf) speichern', csvBtn: 'CSV', csvTitle: 'Kennwerte als CSV-Tabelle speichern', repNoCalc: 'Bitte zuerst eine gültige Berechnung durchführen.', repErrModule: 'Bericht-Modul nicht geladen (report.js).', repSavedRtf: 'Word-Bericht (.rtf) gespeichert.', repSavedCsv: 'CSV-Datei gespeichert.',
       kvCaption: 'Weitere Kennwerte', kvEngage: 'R11 – Mindesteinschraubtiefe', recommended: 'empfohlen', nb: 'n. b.', customOpt: '— eigene Eingabe —', rmHintPrefix: 'Richtwert', rmHintCustom: 'eigener Wert',
       tagWarn: 'Grenze', tagAssume: 'Annahme', tagPending: 'offen', tagFix: 'Tipp',
       improveTitle: 'So wird die Ampel grün (Zielwert S ≥ 1,2):', improveCoupling: 'Danach die übrigen Nachweise erneut prüfen — die Sicherheiten hängen zusammen.',
@@ -122,7 +123,7 @@
       grp_Schraube: 'Bolt & material', grp_Anziehen: 'Friction & tightening', grp_Geometrie: 'Joint & geometry',
       grp_Belastung: 'Loading', grp_Setzen: 'Embedding & interfaces', grp_Nachweise: 'Verifications & options',
       statusOk: 'Calculation complete.', statusInvalid: 'Input incomplete or invalid — please correct.',
-      verdictOk: 'Joint adequately dimensioned', verdictWarn: 'Joint marginally dimensioned', verdictBad: 'Joint not adequate', verdictOkNb: 'Joint adequately dimensioned — not all verifications performed', vbBad: 'Not met', vbWarn: 'Marginal', vbNb: 'Not performed', printBtn: 'Print / PDF', printTitle: 'Print the report or save as PDF',
+      verdictOk: 'Joint adequately dimensioned', verdictWarn: 'Joint marginally dimensioned', verdictBad: 'Joint not adequate', verdictOkNb: 'Joint adequately dimensioned — not all verifications performed', vbBad: 'Not met', vbWarn: 'Marginal', vbNb: 'Not performed', printBtn: 'Print / PDF', printTitle: 'Print the report or save as PDF', rtfBtn: 'Word (.rtf)', rtfTitle: 'Save report as Word document (.rtf)', csvBtn: 'CSV', csvTitle: 'Save key values as CSV table', repNoCalc: 'Please run a valid calculation first.', repErrModule: 'Report module not loaded (report.js).', repSavedRtf: 'Word report (.rtf) saved.', repSavedCsv: 'CSV file saved.',
       kvCaption: 'Further values', kvEngage: 'R11 – minimum length of engagement', recommended: 'recommended', nb: 'n/a', customOpt: '— custom input —', rmHintPrefix: 'Guide value', rmHintCustom: 'custom value',
       tagWarn: 'limit', tagAssume: 'assumption', tagPending: 'open', tagFix: 'tip',
       improveTitle: 'How to turn the indicator green (target S ≥ 1.2):', improveCoupling: 'Then re-check the other verifications — the safety factors are coupled.',
@@ -149,7 +150,7 @@
       grp_Schraube: 'Parafuso e material', grp_Anziehen: 'Atrito e aperto', grp_Geometrie: 'União e geometria',
       grp_Belastung: 'Carregamento', grp_Setzen: 'Assentamento e interfaces', grp_Nachweise: 'Verificações e opções',
       statusOk: 'Cálculo completo.', statusInvalid: 'Entrada incompleta ou inválida — corrija.',
-      verdictOk: 'Junção adequadamente dimensionada', verdictWarn: 'Junção no limite', verdictBad: 'Junção insuficiente', verdictOkNb: 'Junção adequadamente dimensionada — nem todas as verificações realizadas', vbBad: 'Não cumprido', vbWarn: 'No limite', vbNb: 'Não realizado', printBtn: 'Imprimir / PDF', printTitle: 'Imprimir o relatório ou salvar como PDF',
+      verdictOk: 'Junção adequadamente dimensionada', verdictWarn: 'Junção no limite', verdictBad: 'Junção insuficiente', verdictOkNb: 'Junção adequadamente dimensionada — nem todas as verificações realizadas', vbBad: 'Não cumprido', vbWarn: 'No limite', vbNb: 'Não realizado', printBtn: 'Imprimir / PDF', printTitle: 'Imprimir o relatório ou salvar como PDF', rtfBtn: 'Word (.rtf)', rtfTitle: 'Salvar relatório como documento Word (.rtf)', csvBtn: 'CSV', csvTitle: 'Salvar valores como tabela CSV', repNoCalc: 'Faça primeiro um cálculo válido.', repErrModule: 'Módulo de relatório não carregado (report.js).', repSavedRtf: 'Relatório Word (.rtf) salvo.', repSavedCsv: 'Arquivo CSV salvo.',
       kvCaption: 'Outros valores', kvEngage: 'R11 – profundidade mínima de aperto', recommended: 'recomendado', nb: 'n/d', customOpt: '— entrada própria —', rmHintPrefix: 'Valor indicativo', rmHintCustom: 'valor próprio',
       tagWarn: 'limite', tagAssume: 'suposição', tagPending: 'pendente', tagFix: 'dica',
       improveTitle: 'Como tornar o indicador verde (alvo S ≥ 1,2):', improveCoupling: 'Depois, reavalie as outras verificações — os fatores de segurança estão acoplados.',
@@ -713,16 +714,16 @@
     return c;
   }
 
+  function verdictMainText(v) {
+    return t(v.level === 'ok' ? 'verdictOk' : (v.level === 'bad' ? 'verdictBad' : (v.onlyNb ? 'verdictOkNb' : 'verdictWarn')));
+  }
+
   function verdictBanner(v, meta) {
     var sym = v.level === 'ok' ? '🟢' : (v.level === 'warn' ? '🟡' : '🔴');
-    // Text: bei gelb allein wegen n.b. beruhigend formulieren (kein „knapp bemessen")
-    var txtKey = v.level === 'ok' ? 'verdictOk'
-      : (v.level === 'bad' ? 'verdictBad'
-        : (v.onlyNb ? 'verdictOkNb' : 'verdictWarn'));
     var b = el('div', 'verdict-banner ' + v.level);
     b.appendChild(el('span', 'vb-dot', sym));
     var body = el('div', 'vb-body');
-    body.appendChild(el('span', 'vb-text', t(txtKey)));
+    body.appendChild(el('span', 'vb-text', verdictMainText(v)));
 
     // Konkrete Hinweise, welche Nachweise betroffen sind — nach Kategorie gebündelt,
     // damit der Nutzer sofort sieht, dass ein gelbes/rotes Urteil oft nur an einem
@@ -997,6 +998,46 @@
     if (dtMsgTimer) clearTimeout(dtMsgTimer);
     dtMsgTimer = setTimeout(function () { el.textContent = ''; el.className = 'dt-msg'; }, 8000);
   }
+  function downloadText(text, name, mime) {
+    var blob = new Blob([text], { type: mime });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+  }
+
+  // Baut den Report-Kontext aus dem letzten Ergebnis (Ampel-Urteil = EINE Quelle:
+  // overallVerdict; Sicherheits-Labels aus den bestehenden sub_*-Strings).
+  function buildReportCtx() {
+    var R = lastResult, input = lastInputs || collectInputs();
+    var safeties = [
+      R.S_F,
+      R.fatigue ? R.fatigue.S_D : null,
+      R.pressure ? R.pressure.S_P : null,
+      R.slip ? R.slip.S_G : null,
+      R.engagement ? R.engagement.S_A : null
+    ];
+    var v = overallVerdict(safeties);
+    var keys = ['S_F', 'S_D', 'S_P', 'S_G', 'S_A'], subs = ['sub_F', 'sub_D', 'sub_P', 'sub_G', 'sub_A'];
+    var rows = keys.map(function (k, i) { return { key: k, label: t(subs[i]), val: safeties[i], status: v.items[i] }; });
+    var steps = RECHENWEG ? RECHENWEG.build(R, input, { lang: lang, fmt: fmt, fmtExp: fmtExp, eScrew: DATA.E_SCREW, data: DATA }).steps : [];
+    var labelEl = $('dtLabel');
+    return {
+      R: R, input: input, lang: lang, label: labelEl ? labelEl.value : '', date: new Date(),
+      engine: SOLVER.VERSION, verdictLevel: v.level, verdictText: verdictMainText(v), safetyRows: rows, steps: steps
+    };
+  }
+
+  function exportReport(kind) {
+    if (!REPORT) { dtMsg('err', t('repErrModule')); return; }
+    if (!lastResult) { dtMsg('warn', t('repNoCalc')); return; }
+    var ctx = buildReportCtx();
+    var base = dtFileName(ctx.label, new Date()).replace(/\.dt$/, '');
+    if (kind === 'rtf') { downloadText(REPORT.buildRTF(ctx), base + '.rtf', 'application/rtf'); dtMsg('ok', t('repSavedRtf')); }
+    else { downloadText('\uFEFF' + REPORT.buildCSV(ctx), base + '.csv', 'text/csv;charset=utf-8'); dtMsg('ok', t('repSavedCsv')); }
+  }
+
   function saveDT() {
     var labelEl = $('dtLabel');
     var label = labelEl ? labelEl.value : '';
@@ -1082,6 +1123,8 @@
     on('saveBtn', 'click', saveDT);
     on('loadBtn', 'click', function () { var f = $('dtFile'); if (f) f.click(); });
     on('printBtn', 'click', function () { window.print(); });
+    on('rtfBtn', 'click', function () { exportReport('rtf'); });
+    on('csvBtn', 'click', function () { exportReport('csv'); });
     // Vor dem Druck alle <details> (Rechenweg) aufklappen, damit sie vollständig im
     // PDF/Ausdruck erscheinen; danach den vorherigen Zustand wiederherstellen. Über die
     // Events greift das auch bei Strg+P, nicht nur über den Knopf.

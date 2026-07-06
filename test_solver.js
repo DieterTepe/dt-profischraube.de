@@ -1402,6 +1402,73 @@ ok(DATA.PRESETS.grauguss_esv_m12.input.p_G === DATA.TAU_RATIO.gjl.pG, 'Demo-Pres
   });
 })();
 
+/* === 22 · Bericht-Export — report.js (Ausgabe Schritt B, v4.9.1) ========== */
+(function () {
+  var REPORT = require('./report.js');
+  var U = require('./ui.js');
+  var RW = require('./rechenweg.js');
+  ok(typeof REPORT.buildRTF === 'function' && typeof REPORT.buildCSV === 'function' && typeof REPORT.buildModel === 'function',
+    'Report: report.js exportiert buildRTF/buildCSV/buildModel');
+
+  // Kontext aus einem echten Preset bauen (wie es das UI täte)
+  function ctxFor(key, lang) {
+    var input = DATA.PRESETS[key].input, R = S.computeJoint(input);
+    var safeties = [R.S_F, R.fatigue ? R.fatigue.S_D : null, R.pressure ? R.pressure.S_P : null,
+      R.slip ? R.slip.S_G : null, R.engagement ? R.engagement.S_A : null];
+    var v = U.overallVerdict(safeties);
+    var keys = ['S_F', 'S_D', 'S_P', 'S_G', 'S_A'];
+    var rows = keys.map(function (k, i) { return { key: k, label: k, val: safeties[i], status: v.items[i] }; });
+    var steps = RW.build(R, input, { lang: lang }).steps;
+    return { R: R, input: input, lang: lang, label: 'Prüf & Test <M12>', date: new Date('2026-07-06T08:30:00'),
+      engine: S.VERSION, verdictLevel: v.level, verdictText: 'Urteil', safetyRows: rows, steps: steps };
+  }
+
+  // Modell-Grundstruktur
+  var mdl = REPORT.buildModel(ctxFor('hydraulikzylinder', 'de'));
+  ok(mdl.header && mdl.safeties.length === 5 && mdl.keyvals.length > 0 && mdl.inputs.length > 0 && mdl.steps.length > 0,
+    'Report: Modell hat Kopf, 5 Sicherheiten, Kennwerte, Eingaben, Rechenweg');
+  ok(mdl.header.date === '2026-07-06 08:30', 'Report: Datum im Kopf korrekt formatiert (YYYY-MM-DD HH:MM)');
+  ok(mdl.header.engine === S.VERSION, 'Report: Engine-Version im Kopf');
+
+  // RTF: gültiger Rahmen, balancierte geschweifte Klammern, alles Nicht-ASCII escaped
+  ['de', 'en', 'pt'].forEach(function (L) {
+    Object.keys(DATA.PRESETS).forEach(function (key) {
+      var ctx = ctxFor(key, L);
+      var rtf = REPORT.buildRTF(ctx), csv = REPORT.buildCSV(ctx);
+      ok(rtf.charAt(0) === '{' && rtf.charAt(rtf.length - 1) === '}', 'Report RTF-Rahmen ' + key + '/' + L);
+      var opn = (rtf.match(/{/g) || []).length, cls = (rtf.match(/}/g) || []).length;
+      ok(opn === cls, 'Report RTF-Klammern balanciert ' + key + '/' + L + ' (' + opn + '/' + cls + ')');
+      ok(!/[^\x00-\x7F]/.test(rtf), 'Report RTF vollständig ASCII-escaped ' + key + '/' + L);
+      ok(rtf.indexOf('\\rtf1') === 1, 'Report RTF-Header vorhanden ' + key + '/' + L);
+      // CSV: korrekter Trenner je Sprache, keine leere Ausgabe
+      var sep = (L === 'en') ? ',' : ';';
+      ok(csv.indexOf(sep) >= 0 && csv.length > 40, 'Report CSV nicht leer, Trenner ' + sep + ' ' + key + '/' + L);
+    });
+  });
+
+  // Sprach-Trennerlogik + Dezimalzeichen konkret
+  var csvDe = REPORT.buildCSV(ctxFor('hydraulikzylinder', 'de'));
+  var csvEn = REPORT.buildCSV(ctxFor('hydraulikzylinder', 'en'));
+  ok(csvDe.indexOf(';') >= 0, 'Report: DE-CSV nutzt Semikolon');
+  ok(/\d,\d/.test(csvDe), 'Report: DE-CSV nutzt Dezimalkomma');
+  ok(csvEn.indexOf(',') >= 0, 'Report: EN-CSV nutzt Komma als Trenner');
+  ok(/\d\.\d/.test(csvEn), 'Report: EN-CSV nutzt Dezimalpunkt');
+  // CSV-Quoting: ein Wert mit Trennerzeichen muss in Anführungszeichen stehen
+  var ctxSemi = ctxFor('hydraulikzylinder', 'de'); ctxSemi.label = 'A;B;C';
+  ok(REPORT.buildCSV(ctxSemi).indexOf('"A;B;C"') >= 0, 'Report: CSV quotet Werte mit Semikolon korrekt');
+  var ctxComma = ctxFor('hydraulikzylinder', 'en'); ctxComma.label = 'X,Y';
+  ok(REPORT.buildCSV(ctxComma).indexOf('"X,Y"') >= 0, 'Report: EN-CSV quotet Werte mit Komma korrekt');
+
+  // RTF-Escaping: geschweifte Klammern & Backslash aus dem Label landen escaped
+  var rtfEsc = REPORT.buildRTF(ctxFor('hydraulikzylinder', 'de'));
+  ok(rtfEsc.indexOf('Prüf & Test') === -1, 'Report: Umlaut im Label wird escaped (nicht roh)');
+  ok(rtfEsc.indexOf('\\u252?') >= 0, 'Report: ü als \\u252? kodiert');
+
+  // Robustheit: leerer/minimaler Kontext darf nicht werfen
+  ok((function () { try { REPORT.buildRTF({ lang: 'de' }); REPORT.buildCSV({ lang: 'de' }); return true; } catch (e) { return false; } })(),
+    'Report: minimaler Kontext (nur lang) wirft nicht');
+})();
+
 /* === Report ============================================================== */
 console.log('\n  A_S  berechnet  vs.  tabelliert (ISO 898-1)');
 console.log('  ---------------------------------------------');
