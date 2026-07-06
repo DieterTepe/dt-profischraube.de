@@ -80,6 +80,21 @@ h1, h2, h3 { margin: 0; font-weight: 700; letter-spacing: -0.01em; }
 .num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
 
 /* ----------------------------------------------------------------- Header -- */
+.edition-bar {
+  text-align: center; font-size: 12px; font-weight: 700; letter-spacing: .4px;
+  padding: 4px 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.edition-bar.full {
+  background: var(--ok-soft); color: var(--ok);
+  border-bottom: 1px solid color-mix(in srgb, var(--ok) 40%, transparent);
+}
+.edition-bar.test {
+  background: var(--warn); color: #1a1205; letter-spacing: .6px;
+  border-bottom: 1px solid color-mix(in srgb, var(--warn) 70%, #000);
+  text-transform: uppercase;
+}
+@media print { .edition-bar { position: static; } }
+
 .app-header {
   position: sticky; top: 0; z-index: 40;
   display: flex; align-items: center; gap: 16px;

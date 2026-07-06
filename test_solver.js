@@ -1491,6 +1491,38 @@ ok(DATA.PRESETS.grauguss_esv_m12.input.p_G === DATA.TAU_RATIO.gjl.pG, 'Demo-Pres
   ok(REPORT.watermarkText('de').indexOf('DT-ProfiSchraube') === 0, 'PNG: Wasserzeichen beginnt mit Produktname');
 })();
 
+/* === 24 · Test/Voll-Gating — report.js (Ausgabe Schritt C Teil 2, v4.9.3) == */
+(function () {
+  var REPORT = require('./report.js');
+  ok(typeof REPORT.isFeatureAllowed === 'function' && Array.isArray(REPORT.GATED_FEATURES),
+    'Gating: report.js exportiert isFeatureAllowed + GATED_FEATURES');
+  ok(REPORT.GATED_FEATURES.length === 6, 'Gating: sechs gated Features (save/load/print/rtf/csv/png)');
+
+  // Vollversion: alles erlaubt
+  REPORT.GATED_FEATURES.forEach(function (f) {
+    ok(REPORT.isFeatureAllowed(f, 'full') === true, 'Gating: Vollversion erlaubt ' + f);
+  });
+  // Testversion: nur PNG erlaubt, alles andere gesperrt
+  ok(REPORT.isFeatureAllowed('png', 'test') === true, 'Gating: Testversion erlaubt PNG');
+  ['save', 'load', 'print', 'rtf', 'csv'].forEach(function (f) {
+    ok(REPORT.isFeatureAllowed(f, 'test') === false, 'Gating: Testversion sperrt ' + f);
+  });
+  // Sichere Voreinstellung: fehlende/unbekannte Kennung wirkt wie Vollversion
+  ['full', undefined, null, '', 'Test', 'voll', 'xyz'].forEach(function (ed) {
+    ok(REPORT.isFeatureAllowed('save', ed) === true, 'Gating: Kennung ' + JSON.stringify(ed) + ' -> wie Voll (save erlaubt)');
+    ok(REPORT.isFeatureAllowed('rtf', ed) === true, 'Gating: Kennung ' + JSON.stringify(ed) + ' -> wie Voll (rtf erlaubt)');
+  });
+  // nur exakt 'test' (streng) sperrt
+  ok(REPORT.isFeatureAllowed('csv', 'test') === false && REPORT.isFeatureAllowed('csv', 'Test') === true,
+    'Gating: nur exakt "test" sperrt (Groß-/Kleinschreibung streng)');
+  // Konsistenz mit dem Wasserzeichen: genau die Editionen, die das Wasserzeichen
+  // tragen, sind auch die mit gesperrten Exporten
+  ['test', 'full', undefined, 'xyz'].forEach(function (ed) {
+    var locked = !REPORT.isFeatureAllowed('rtf', ed);
+    ok(locked === REPORT.shouldWatermark(ed), 'Gating: Sperre und Wasserzeichen konsistent für ' + JSON.stringify(ed));
+  });
+})();
+
 /* === Report ============================================================== */
 console.log('\n  A_S  berechnet  vs.  tabelliert (ISO 898-1)');
 console.log('  ---------------------------------------------');

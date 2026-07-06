@@ -90,6 +90,17 @@
   //  eine versehentlich markierte Vollversion wäre peinlich).
   function shouldWatermark(edition) { return edition === 'test'; }
 
+  /* ---- Funktions-Gating Test/Voll (reine Logik; UI zeigt sonst ein Overlay) ---
+   * Testversion: nur der PNG-Export ist erlaubt (mit Wasserzeichen — Vorgeschmack).
+   * Alle übrigen Ausgaben/Datei-Aktionen (Speichern, Laden, Druck, RTF, CSV) sind
+   * gesperrt. Vollversion und jede unbekannte/fehlende Kennung → alles erlaubt
+   * (sichere Voreinstellung, deckungsgleich mit shouldWatermark). */
+  var GATED_FEATURES = ['save', 'load', 'print', 'rtf', 'csv', 'png'];
+  function isFeatureAllowed(feature, edition) {
+    if (edition === 'test') return feature === 'png';
+    return true;
+  }
+
   /* Zahlenformat: EN mit Dezimalpunkt, DE/PT mit Dezimalkomma. */
   function num(x, lang, dec) {
     if (x == null || typeof x !== 'number' || !isFinite(x)) return '';
@@ -316,5 +327,5 @@
     return out;
   }
 
-  return { VERSION: VERSION, buildModel: buildModel, buildRTF: buildRTF, buildCSV: buildCSV, watermarkText: watermarkText, shouldWatermark: shouldWatermark };
+  return { VERSION: VERSION, buildModel: buildModel, buildRTF: buildRTF, buildCSV: buildCSV, watermarkText: watermarkText, shouldWatermark: shouldWatermark, isFeatureAllowed: isFeatureAllowed, GATED_FEATURES: GATED_FEATURES };
 });

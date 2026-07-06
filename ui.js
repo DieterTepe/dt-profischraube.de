@@ -76,6 +76,9 @@
   var RECHENWEG = window.DTSRechenweg || null;
   var SCHAUBILD = window.DTSSchaubild || null;
   var REPORT = window.DTSReport || null;
+  // Feste Editions-Kennung dieser Datei (im <head> gesetzt). Nur exakt 'test' zählt
+  // als Testversion; alles andere (fehlend/'full'/unbekannt) gilt sicher als Vollversion.
+  var EDITION = (window.DT_EDITION === 'test') ? 'test' : 'full';
   if (!DATA || !VALID || !SOLVER) {
     document.getElementById('resultHost').innerHTML =
       '<div class="status-banner bad">Module nicht geladen (daten.js / validate.js / solver.js).</div>';
@@ -96,7 +99,7 @@
       grp_Schraube: 'Schraube & Werkstoff', grp_Anziehen: 'Reibung & Anziehen', grp_Geometrie: 'Verbindung & Geometrie',
       grp_Belastung: 'Belastung', grp_Setzen: 'Setzen & Trennflächen', grp_Nachweise: 'Nachweise & Optionen',
       statusOk: 'Berechnung vollständig.', statusInvalid: 'Eingaben unvollständig oder ungültig — bitte korrigieren.',
-      verdictOk: 'Verbindung ausreichend dimensioniert', verdictWarn: 'Verbindung knapp bemessen', verdictBad: 'Verbindung nicht ausreichend', verdictOkNb: 'Verbindung ausreichend dimensioniert — nicht alle Nachweise geführt', vbBad: 'Nicht erfüllt', vbWarn: 'Knapp', vbNb: 'Nicht geführt', printBtn: 'Drucken / PDF', printTitle: 'Bericht drucken oder als PDF speichern', rtfBtn: 'Word (.rtf)', rtfTitle: 'Bericht als Word-Dokument (.rtf) speichern', csvBtn: 'CSV', csvTitle: 'Kennwerte als CSV-Tabelle speichern', pngBtn: 'Bild (.png)', pngTitle: 'Verspannungsschaubild als PNG-Bild speichern', pngNoViz: 'Kein Schaubild vorhanden — bitte zuerst rechnen.', pngSaved: 'Schaubild (.png) gespeichert.', pngErr: 'Bild konnte nicht erzeugt werden.', repNoCalc: 'Bitte zuerst eine gültige Berechnung durchführen.', repErrModule: 'Bericht-Modul nicht geladen (report.js).', repSavedRtf: 'Word-Bericht (.rtf) gespeichert.', repSavedCsv: 'CSV-Datei gespeichert.',
+      verdictOk: 'Verbindung ausreichend dimensioniert', verdictWarn: 'Verbindung knapp bemessen', verdictBad: 'Verbindung nicht ausreichend', verdictOkNb: 'Verbindung ausreichend dimensioniert — nicht alle Nachweise geführt', vbBad: 'Nicht erfüllt', vbWarn: 'Knapp', vbNb: 'Nicht geführt', printBtn: 'Drucken / PDF', printTitle: 'Bericht drucken oder als PDF speichern', rtfBtn: 'Word (.rtf)', rtfTitle: 'Bericht als Word-Dokument (.rtf) speichern', csvBtn: 'CSV', csvTitle: 'Kennwerte als CSV-Tabelle speichern', pngBtn: 'Bild (.png)', pngTitle: 'Verspannungsschaubild als PNG-Bild speichern', pngNoViz: 'Kein Schaubild vorhanden — bitte zuerst rechnen.', pngSaved: 'Schaubild (.png) gespeichert.', pngErr: 'Bild konnte nicht erzeugt werden.', editionFull: 'Vollversion', editionTest: 'Testversion', lockTitle: 'Nur in der Vollversion', lockBody: 'Diese Funktion ist in der Testversion nicht verfügbar. In der Vollversion stehen Speichern, Laden und alle Ausgaben (Druck/PDF, Word, CSV) zur Verfügung.', repNoCalc: 'Bitte zuerst eine gültige Berechnung durchführen.', repErrModule: 'Bericht-Modul nicht geladen (report.js).', repSavedRtf: 'Word-Bericht (.rtf) gespeichert.', repSavedCsv: 'CSV-Datei gespeichert.',
       kvCaption: 'Weitere Kennwerte', kvEngage: 'R11 – Mindesteinschraubtiefe', recommended: 'empfohlen', nb: 'n. b.', customOpt: '— eigene Eingabe —', rmHintPrefix: 'Richtwert', rmHintCustom: 'eigener Wert',
       tagWarn: 'Grenze', tagAssume: 'Annahme', tagPending: 'offen', tagFix: 'Tipp',
       improveTitle: 'So wird die Ampel grün (Zielwert S ≥ 1,2):', improveCoupling: 'Danach die übrigen Nachweise erneut prüfen — die Sicherheiten hängen zusammen.',
@@ -123,7 +126,7 @@
       grp_Schraube: 'Bolt & material', grp_Anziehen: 'Friction & tightening', grp_Geometrie: 'Joint & geometry',
       grp_Belastung: 'Loading', grp_Setzen: 'Embedding & interfaces', grp_Nachweise: 'Verifications & options',
       statusOk: 'Calculation complete.', statusInvalid: 'Input incomplete or invalid — please correct.',
-      verdictOk: 'Joint adequately dimensioned', verdictWarn: 'Joint marginally dimensioned', verdictBad: 'Joint not adequate', verdictOkNb: 'Joint adequately dimensioned — not all verifications performed', vbBad: 'Not met', vbWarn: 'Marginal', vbNb: 'Not performed', printBtn: 'Print / PDF', printTitle: 'Print the report or save as PDF', rtfBtn: 'Word (.rtf)', rtfTitle: 'Save report as Word document (.rtf)', csvBtn: 'CSV', csvTitle: 'Save key values as CSV table', pngBtn: 'Image (.png)', pngTitle: 'Save the joint diagram as a PNG image', pngNoViz: 'No diagram yet — please run a calculation first.', pngSaved: 'Diagram (.png) saved.', pngErr: 'Could not generate image.', repNoCalc: 'Please run a valid calculation first.', repErrModule: 'Report module not loaded (report.js).', repSavedRtf: 'Word report (.rtf) saved.', repSavedCsv: 'CSV file saved.',
+      verdictOk: 'Joint adequately dimensioned', verdictWarn: 'Joint marginally dimensioned', verdictBad: 'Joint not adequate', verdictOkNb: 'Joint adequately dimensioned — not all verifications performed', vbBad: 'Not met', vbWarn: 'Marginal', vbNb: 'Not performed', printBtn: 'Print / PDF', printTitle: 'Print the report or save as PDF', rtfBtn: 'Word (.rtf)', rtfTitle: 'Save report as Word document (.rtf)', csvBtn: 'CSV', csvTitle: 'Save key values as CSV table', pngBtn: 'Image (.png)', pngTitle: 'Save the joint diagram as a PNG image', pngNoViz: 'No diagram yet — please run a calculation first.', pngSaved: 'Diagram (.png) saved.', pngErr: 'Could not generate image.', editionFull: 'Full version', editionTest: 'Test version', lockTitle: 'Full version only', lockBody: 'This function is not available in the test version. The full version provides saving, loading and all exports (print/PDF, Word, CSV).', repNoCalc: 'Please run a valid calculation first.', repErrModule: 'Report module not loaded (report.js).', repSavedRtf: 'Word report (.rtf) saved.', repSavedCsv: 'CSV file saved.',
       kvCaption: 'Further values', kvEngage: 'R11 – minimum length of engagement', recommended: 'recommended', nb: 'n/a', customOpt: '— custom input —', rmHintPrefix: 'Guide value', rmHintCustom: 'custom value',
       tagWarn: 'limit', tagAssume: 'assumption', tagPending: 'open', tagFix: 'tip',
       improveTitle: 'How to turn the indicator green (target S ≥ 1.2):', improveCoupling: 'Then re-check the other verifications — the safety factors are coupled.',
@@ -150,7 +153,7 @@
       grp_Schraube: 'Parafuso e material', grp_Anziehen: 'Atrito e aperto', grp_Geometrie: 'União e geometria',
       grp_Belastung: 'Carregamento', grp_Setzen: 'Assentamento e interfaces', grp_Nachweise: 'Verificações e opções',
       statusOk: 'Cálculo completo.', statusInvalid: 'Entrada incompleta ou inválida — corrija.',
-      verdictOk: 'Junção adequadamente dimensionada', verdictWarn: 'Junção no limite', verdictBad: 'Junção insuficiente', verdictOkNb: 'Junção adequadamente dimensionada — nem todas as verificações realizadas', vbBad: 'Não cumprido', vbWarn: 'No limite', vbNb: 'Não realizado', printBtn: 'Imprimir / PDF', printTitle: 'Imprimir o relatório ou salvar como PDF', rtfBtn: 'Word (.rtf)', rtfTitle: 'Salvar relatório como documento Word (.rtf)', csvBtn: 'CSV', csvTitle: 'Salvar valores como tabela CSV', pngBtn: 'Imagem (.png)', pngTitle: 'Salvar o diagrama de aperto como imagem PNG', pngNoViz: 'Nenhum diagrama ainda — faça primeiro um cálculo.', pngSaved: 'Diagrama (.png) salvo.', pngErr: 'Não foi possível gerar a imagem.', repNoCalc: 'Faça primeiro um cálculo válido.', repErrModule: 'Módulo de relatório não carregado (report.js).', repSavedRtf: 'Relatório Word (.rtf) salvo.', repSavedCsv: 'Arquivo CSV salvo.',
+      verdictOk: 'Junção adequadamente dimensionada', verdictWarn: 'Junção no limite', verdictBad: 'Junção insuficiente', verdictOkNb: 'Junção adequadamente dimensionada — nem todas as verificações realizadas', vbBad: 'Não cumprido', vbWarn: 'No limite', vbNb: 'Não realizado', printBtn: 'Imprimir / PDF', printTitle: 'Imprimir o relatório ou salvar como PDF', rtfBtn: 'Word (.rtf)', rtfTitle: 'Salvar relatório como documento Word (.rtf)', csvBtn: 'CSV', csvTitle: 'Salvar valores como tabela CSV', pngBtn: 'Imagem (.png)', pngTitle: 'Salvar o diagrama de aperto como imagem PNG', pngNoViz: 'Nenhum diagrama ainda — faça primeiro um cálculo.', pngSaved: 'Diagrama (.png) salvo.', pngErr: 'Não foi possível gerar a imagem.', editionFull: 'Versão completa', editionTest: 'Versão de teste', lockTitle: 'Apenas na versão completa', lockBody: 'Esta função não está disponível na versão de teste. A versão completa oferece salvar, carregar e todas as exportações (impressão/PDF, Word, CSV).', repNoCalc: 'Faça primeiro um cálculo válido.', repErrModule: 'Módulo de relatório não carregado (report.js).', repSavedRtf: 'Relatório Word (.rtf) salvo.', repSavedCsv: 'Arquivo CSV salvo.',
       kvCaption: 'Outros valores', kvEngage: 'R11 – profundidade mínima de aperto', recommended: 'recomendado', nb: 'n/d', customOpt: '— entrada própria —', rmHintPrefix: 'Valor indicativo', rmHintCustom: 'valor próprio',
       tagWarn: 'limite', tagAssume: 'suposição', tagPending: 'pendente', tagFix: 'dica',
       improveTitle: 'Como tornar o indicador verde (alvo S ≥ 1,2):', improveCoupling: 'Depois, reavalie as outras verificações — os fatores de segurança estão acoplados.',
@@ -329,6 +332,27 @@
     m.classList.remove('open');
     m.removeEventListener('keydown', onModalKeydown);
     if (lastFocused && lastFocused.focus) { lastFocused.focus(); lastFocused = null; }
+  }
+
+  // Sperrt eine Aktion, wenn sie in der aktuellen Edition nicht erlaubt ist, und
+  // zeigt stattdessen das Hinweis-Overlay. In der Vollversion ist alles erlaubt,
+  // sodass der Wrapper dort transparent durchreicht.
+  function guard(feature, fn) {
+    return function () {
+      if (REPORT && !REPORT.isFeatureAllowed(feature, EDITION)) { showLockedOverlay(); return; }
+      fn();
+    };
+  }
+  function showLockedOverlay() {
+    var tt = $('modalTitle'); if (tt) tt.textContent = t('lockTitle');
+    var b = $('modalBody'); if (b) { b.innerHTML = ''; b.appendChild(el('p', null, t('lockBody'))); }
+    openModal();
+  }
+  // Editions-Hinweisbalken oben befüllen (Test deutlich, Voll dezent), dreisprachig.
+  function applyEdition() {
+    var bar = $('editionBar'); if (!bar) return;
+    bar.className = 'edition-bar ' + EDITION;
+    bar.textContent = t(EDITION === 'test' ? 'editionTest' : 'editionFull');
   }
 
   function openInfo() {
@@ -1180,6 +1204,7 @@
     var btns = document.querySelectorAll('#langSwitch .lang-btn');
     for (var j = 0; j < btns.length; j++) btns[j].classList.toggle('active', btns[j].getAttribute('data-lang') === lang);
     updateDependencies();
+    applyEdition();
     if (lastResult) renderResults(lastResult); else { var h = $('resultHost'); if (h.querySelector('.status-banner.idle')) { h.innerHTML = ''; h.appendChild(banner('idle', t('resultIdle'))); } resetViz(); }
     if (hadForm) liveValidate();
   }
@@ -1208,12 +1233,12 @@
     on('resetBtn', 'click', resetForm);
     on('advToggle', 'change', function () { document.body.classList.toggle('show-adv', this.checked); });
     on('presetSel', 'change', function () { if (this.value) loadPreset(this.value); });
-    on('saveBtn', 'click', saveDT);
-    on('loadBtn', 'click', function () { var f = $('dtFile'); if (f) f.click(); });
-    on('printBtn', 'click', function () { window.print(); });
-    on('rtfBtn', 'click', function () { exportReport('rtf'); });
-    on('csvBtn', 'click', function () { exportReport('csv'); });
-    on('pngBtn', 'click', function () { exportPNG(); });
+    on('saveBtn', 'click', guard('save', saveDT));
+    on('loadBtn', 'click', guard('load', function () { var f = $('dtFile'); if (f) f.click(); }));
+    on('printBtn', 'click', guard('print', function () { window.print(); }));
+    on('rtfBtn', 'click', guard('rtf', function () { exportReport('rtf'); }));
+    on('csvBtn', 'click', guard('csv', function () { exportReport('csv'); }));
+    on('pngBtn', 'click', guard('png', exportPNG));
     // Vor dem Druck alle <details> (Rechenweg) aufklappen, damit sie vollständig im
     // PDF/Ausdruck erscheinen; danach den vorherigen Zustand wiederherstellen. Über die
     // Events greift das auch bei Strg+P, nicht nur über den Knopf.
