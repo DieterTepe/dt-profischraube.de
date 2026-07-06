@@ -78,6 +78,18 @@
 
   function pick(o, lang) { return (o && (o[lang] || o.de)) || ''; }
 
+  /* ---- Testversion-Wasserzeichen (reine, testbare Logik; Zeichnen macht das UI) */
+  var WATERMARK = {
+    de: 'DT-ProfiSchraube – Testversion – nicht für Produktivnutzung',
+    en: 'DT-ProfiSchraube – Test version – not for production use',
+    pt: 'DT-ProfiSchraube – Versão de teste – não usar em produção'
+  };
+  function watermarkText(lang) { return pick(WATERMARK, lang); }
+  // Wasserzeichen NUR in der Testversion. Fehlt/anders die Kennung → keine Marke
+  // (sichere Voreinstellung: eine versehentlich unmarkierte Vollversion ist harmlos,
+  //  eine versehentlich markierte Vollversion wäre peinlich).
+  function shouldWatermark(edition) { return edition === 'test'; }
+
   /* Zahlenformat: EN mit Dezimalpunkt, DE/PT mit Dezimalkomma. */
   function num(x, lang, dec) {
     if (x == null || typeof x !== 'number' || !isFinite(x)) return '';
@@ -304,5 +316,5 @@
     return out;
   }
 
-  return { VERSION: VERSION, buildModel: buildModel, buildRTF: buildRTF, buildCSV: buildCSV };
+  return { VERSION: VERSION, buildModel: buildModel, buildRTF: buildRTF, buildCSV: buildCSV, watermarkText: watermarkText, shouldWatermark: shouldWatermark };
 });

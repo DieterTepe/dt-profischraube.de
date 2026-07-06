@@ -96,7 +96,7 @@
       grp_Schraube: 'Schraube & Werkstoff', grp_Anziehen: 'Reibung & Anziehen', grp_Geometrie: 'Verbindung & Geometrie',
       grp_Belastung: 'Belastung', grp_Setzen: 'Setzen & Trennflächen', grp_Nachweise: 'Nachweise & Optionen',
       statusOk: 'Berechnung vollständig.', statusInvalid: 'Eingaben unvollständig oder ungültig — bitte korrigieren.',
-      verdictOk: 'Verbindung ausreichend dimensioniert', verdictWarn: 'Verbindung knapp bemessen', verdictBad: 'Verbindung nicht ausreichend', verdictOkNb: 'Verbindung ausreichend dimensioniert — nicht alle Nachweise geführt', vbBad: 'Nicht erfüllt', vbWarn: 'Knapp', vbNb: 'Nicht geführt', printBtn: 'Drucken / PDF', printTitle: 'Bericht drucken oder als PDF speichern', rtfBtn: 'Word (.rtf)', rtfTitle: 'Bericht als Word-Dokument (.rtf) speichern', csvBtn: 'CSV', csvTitle: 'Kennwerte als CSV-Tabelle speichern', repNoCalc: 'Bitte zuerst eine gültige Berechnung durchführen.', repErrModule: 'Bericht-Modul nicht geladen (report.js).', repSavedRtf: 'Word-Bericht (.rtf) gespeichert.', repSavedCsv: 'CSV-Datei gespeichert.',
+      verdictOk: 'Verbindung ausreichend dimensioniert', verdictWarn: 'Verbindung knapp bemessen', verdictBad: 'Verbindung nicht ausreichend', verdictOkNb: 'Verbindung ausreichend dimensioniert — nicht alle Nachweise geführt', vbBad: 'Nicht erfüllt', vbWarn: 'Knapp', vbNb: 'Nicht geführt', printBtn: 'Drucken / PDF', printTitle: 'Bericht drucken oder als PDF speichern', rtfBtn: 'Word (.rtf)', rtfTitle: 'Bericht als Word-Dokument (.rtf) speichern', csvBtn: 'CSV', csvTitle: 'Kennwerte als CSV-Tabelle speichern', pngBtn: 'Bild (.png)', pngTitle: 'Verspannungsschaubild als PNG-Bild speichern', pngNoViz: 'Kein Schaubild vorhanden — bitte zuerst rechnen.', pngSaved: 'Schaubild (.png) gespeichert.', pngErr: 'Bild konnte nicht erzeugt werden.', repNoCalc: 'Bitte zuerst eine gültige Berechnung durchführen.', repErrModule: 'Bericht-Modul nicht geladen (report.js).', repSavedRtf: 'Word-Bericht (.rtf) gespeichert.', repSavedCsv: 'CSV-Datei gespeichert.',
       kvCaption: 'Weitere Kennwerte', kvEngage: 'R11 – Mindesteinschraubtiefe', recommended: 'empfohlen', nb: 'n. b.', customOpt: '— eigene Eingabe —', rmHintPrefix: 'Richtwert', rmHintCustom: 'eigener Wert',
       tagWarn: 'Grenze', tagAssume: 'Annahme', tagPending: 'offen', tagFix: 'Tipp',
       improveTitle: 'So wird die Ampel grün (Zielwert S ≥ 1,2):', improveCoupling: 'Danach die übrigen Nachweise erneut prüfen — die Sicherheiten hängen zusammen.',
@@ -123,7 +123,7 @@
       grp_Schraube: 'Bolt & material', grp_Anziehen: 'Friction & tightening', grp_Geometrie: 'Joint & geometry',
       grp_Belastung: 'Loading', grp_Setzen: 'Embedding & interfaces', grp_Nachweise: 'Verifications & options',
       statusOk: 'Calculation complete.', statusInvalid: 'Input incomplete or invalid — please correct.',
-      verdictOk: 'Joint adequately dimensioned', verdictWarn: 'Joint marginally dimensioned', verdictBad: 'Joint not adequate', verdictOkNb: 'Joint adequately dimensioned — not all verifications performed', vbBad: 'Not met', vbWarn: 'Marginal', vbNb: 'Not performed', printBtn: 'Print / PDF', printTitle: 'Print the report or save as PDF', rtfBtn: 'Word (.rtf)', rtfTitle: 'Save report as Word document (.rtf)', csvBtn: 'CSV', csvTitle: 'Save key values as CSV table', repNoCalc: 'Please run a valid calculation first.', repErrModule: 'Report module not loaded (report.js).', repSavedRtf: 'Word report (.rtf) saved.', repSavedCsv: 'CSV file saved.',
+      verdictOk: 'Joint adequately dimensioned', verdictWarn: 'Joint marginally dimensioned', verdictBad: 'Joint not adequate', verdictOkNb: 'Joint adequately dimensioned — not all verifications performed', vbBad: 'Not met', vbWarn: 'Marginal', vbNb: 'Not performed', printBtn: 'Print / PDF', printTitle: 'Print the report or save as PDF', rtfBtn: 'Word (.rtf)', rtfTitle: 'Save report as Word document (.rtf)', csvBtn: 'CSV', csvTitle: 'Save key values as CSV table', pngBtn: 'Image (.png)', pngTitle: 'Save the joint diagram as a PNG image', pngNoViz: 'No diagram yet — please run a calculation first.', pngSaved: 'Diagram (.png) saved.', pngErr: 'Could not generate image.', repNoCalc: 'Please run a valid calculation first.', repErrModule: 'Report module not loaded (report.js).', repSavedRtf: 'Word report (.rtf) saved.', repSavedCsv: 'CSV file saved.',
       kvCaption: 'Further values', kvEngage: 'R11 – minimum length of engagement', recommended: 'recommended', nb: 'n/a', customOpt: '— custom input —', rmHintPrefix: 'Guide value', rmHintCustom: 'custom value',
       tagWarn: 'limit', tagAssume: 'assumption', tagPending: 'open', tagFix: 'tip',
       improveTitle: 'How to turn the indicator green (target S ≥ 1.2):', improveCoupling: 'Then re-check the other verifications — the safety factors are coupled.',
@@ -150,7 +150,7 @@
       grp_Schraube: 'Parafuso e material', grp_Anziehen: 'Atrito e aperto', grp_Geometrie: 'União e geometria',
       grp_Belastung: 'Carregamento', grp_Setzen: 'Assentamento e interfaces', grp_Nachweise: 'Verificações e opções',
       statusOk: 'Cálculo completo.', statusInvalid: 'Entrada incompleta ou inválida — corrija.',
-      verdictOk: 'Junção adequadamente dimensionada', verdictWarn: 'Junção no limite', verdictBad: 'Junção insuficiente', verdictOkNb: 'Junção adequadamente dimensionada — nem todas as verificações realizadas', vbBad: 'Não cumprido', vbWarn: 'No limite', vbNb: 'Não realizado', printBtn: 'Imprimir / PDF', printTitle: 'Imprimir o relatório ou salvar como PDF', rtfBtn: 'Word (.rtf)', rtfTitle: 'Salvar relatório como documento Word (.rtf)', csvBtn: 'CSV', csvTitle: 'Salvar valores como tabela CSV', repNoCalc: 'Faça primeiro um cálculo válido.', repErrModule: 'Módulo de relatório não carregado (report.js).', repSavedRtf: 'Relatório Word (.rtf) salvo.', repSavedCsv: 'Arquivo CSV salvo.',
+      verdictOk: 'Junção adequadamente dimensionada', verdictWarn: 'Junção no limite', verdictBad: 'Junção insuficiente', verdictOkNb: 'Junção adequadamente dimensionada — nem todas as verificações realizadas', vbBad: 'Não cumprido', vbWarn: 'No limite', vbNb: 'Não realizado', printBtn: 'Imprimir / PDF', printTitle: 'Imprimir o relatório ou salvar como PDF', rtfBtn: 'Word (.rtf)', rtfTitle: 'Salvar relatório como documento Word (.rtf)', csvBtn: 'CSV', csvTitle: 'Salvar valores como tabela CSV', pngBtn: 'Imagem (.png)', pngTitle: 'Salvar o diagrama de aperto como imagem PNG', pngNoViz: 'Nenhum diagrama ainda — faça primeiro um cálculo.', pngSaved: 'Diagrama (.png) salvo.', pngErr: 'Não foi possível gerar a imagem.', repNoCalc: 'Faça primeiro um cálculo válido.', repErrModule: 'Módulo de relatório não carregado (report.js).', repSavedRtf: 'Relatório Word (.rtf) salvo.', repSavedCsv: 'Arquivo CSV salvo.',
       kvCaption: 'Outros valores', kvEngage: 'R11 – profundidade mínima de aperto', recommended: 'recomendado', nb: 'n/d', customOpt: '— entrada própria —', rmHintPrefix: 'Valor indicativo', rmHintCustom: 'valor próprio',
       tagWarn: 'limite', tagAssume: 'suposição', tagPending: 'pendente', tagFix: 'dica',
       improveTitle: 'Como tornar o indicador verde (alvo S ≥ 1,2):', improveCoupling: 'Depois, reavalie as outras verificações — os fatores de segurança estão acoplados.',
@@ -998,13 +998,101 @@
     if (dtMsgTimer) clearTimeout(dtMsgTimer);
     dtMsgTimer = setTimeout(function () { el.textContent = ''; el.className = 'dt-msg'; }, 8000);
   }
-  function downloadText(text, name, mime) {
-    var blob = new Blob([text], { type: mime });
+  // ---- Schaubild als PNG (SVG -> Canvas -> Download), voll offline -----------
+  // Externe CSS-Regeln (die .sb-* Klassen) kommen beim Canvas-Rendern eines SVG
+  // NICHT mit; darum werden die berechneten Stile vor dem Export als Attribute in
+  // einen Klon eingefroren. getComputedStyle löst dabei die CSS-Variablen auf.
+  var PNG_STYLE_PROPS = ['fill', 'fill-opacity', 'stroke', 'stroke-width', 'stroke-dasharray',
+    'stroke-linecap', 'stroke-linejoin', 'opacity', 'font-family', 'font-size', 'font-weight', 'text-anchor'];
+  function inlineComputedStyles(src, clone) {
+    if (src.nodeType === 1) {
+      var cs = window.getComputedStyle(src), decl = '';
+      for (var i = 0; i < PNG_STYLE_PROPS.length; i++) {
+        var p = PNG_STYLE_PROPS[i], v = cs.getPropertyValue(p);
+        if (v && v !== 'none' || (p === 'fill' && v === 'none') || (p === 'stroke' && v === 'none')) {
+          if (v) decl += p + ':' + v + ';';
+        }
+      }
+      if (decl) clone.setAttribute('style', decl);
+      if (clone.hasAttribute('class')) clone.removeAttribute('class');
+    }
+    var sc = src.childNodes, cc = clone.childNodes;
+    for (var k = 0; k < sc.length; k++) if (cc[k]) inlineComputedStyles(sc[k], cc[k]);
+  }
+  function cssVar(name, fallback) {
+    var v = window.getComputedStyle(document.documentElement).getPropertyValue(name);
+    return (v && v.trim()) || fallback;
+  }
+  function drawWatermark(ctx, w, h, text) {
+    ctx.save();
+    ctx.translate(w / 2, h / 2);
+    ctx.rotate(-Math.atan2(h, w));
+    var diag = Math.sqrt(w * w + h * h);
+    ctx.font = '700 ' + Math.round(diag * 0.030) + 'px "Segoe UI", Arial, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(200,40,40,0.25)';
+    // bei Bedarf zweizeilig, damit der lange Text nicht über den Rand läuft
+    var maxW = diag * 0.92;
+    if (ctx.measureText(text).width > maxW && text.indexOf(' – ') > 0) {
+      var parts = text.split(' – ');
+      var line1 = parts.shift(), line2 = parts.join(' – ');
+      var lh = Math.round(diag * 0.036);
+      ctx.fillText(line1, 0, -lh / 2);
+      ctx.fillText(line2, 0, lh / 2);
+    } else {
+      ctx.fillText(text, 0, 0);
+    }
+    ctx.restore();
+  }
+  function exportPNG() {
+    var host = $('vizHost');
+    var svg = host ? host.querySelector('svg.schaubild') : null;
+    if (!svg) { dtMsg('warn', t('pngNoViz')); return; }
+    var vb = svg.viewBox && svg.viewBox.baseVal;
+    var w = (vb && vb.width) ? vb.width : (svg.clientWidth || 680);
+    var h = (vb && vb.height) ? vb.height : (svg.clientHeight || 470);
+    var scale = 2; // Retina-Schärfe
+    var clone = svg.cloneNode(true);
+    inlineComputedStyles(svg, clone);
+    clone.setAttribute('width', w);
+    clone.setAttribute('height', h);
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    var xml = new XMLSerializer().serializeToString(clone);
+    var url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
+    var img = new Image();
+    img.onload = function () {
+      try {
+        var canvas = document.createElement('canvas');
+        canvas.width = Math.round(w * scale); canvas.height = Math.round(h * scale);
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = cssVar('--card', cssVar('--bg', '#ffffff'));
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        if (REPORT && REPORT.shouldWatermark(window.DT_EDITION)) {
+          drawWatermark(ctx, canvas.width, canvas.height, REPORT.watermarkText(lang));
+        }
+        canvas.toBlob(function (blob) {
+          if (!blob) { dtMsg('err', t('pngErr')); return; }
+          var labelEl = $('dtLabel');
+          var base = dtFileName(labelEl ? labelEl.value : '', new Date()).replace(/\.dt$/, '');
+          downloadBlob(blob, base + '.png');
+          dtMsg('ok', t('pngSaved'));
+        }, 'image/png');
+      } catch (e) { dtMsg('err', t('pngErr')); }
+    };
+    img.onerror = function () { dtMsg('err', t('pngErr')); };
+    img.src = url;
+  }
+
+  function downloadBlob(blob, name) {
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url; a.download = name;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+  }
+  function downloadText(text, name, mime) {
+    downloadBlob(new Blob([text], { type: mime }), name);
   }
 
   // Baut den Report-Kontext aus dem letzten Ergebnis (Ampel-Urteil = EINE Quelle:
@@ -1125,6 +1213,7 @@
     on('printBtn', 'click', function () { window.print(); });
     on('rtfBtn', 'click', function () { exportReport('rtf'); });
     on('csvBtn', 'click', function () { exportReport('csv'); });
+    on('pngBtn', 'click', function () { exportPNG(); });
     // Vor dem Druck alle <details> (Rechenweg) aufklappen, damit sie vollständig im
     // PDF/Ausdruck erscheinen; danach den vorherigen Zustand wiederherstellen. Über die
     // Events greift das auch bei Strg+P, nicht nur über den Knopf.

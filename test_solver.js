@@ -1469,6 +1469,28 @@ ok(DATA.PRESETS.grauguss_esv_m12.input.p_G === DATA.TAU_RATIO.gjl.pG, 'Demo-Pres
     'Report: minimaler Kontext (nur lang) wirft nicht');
 })();
 
+/* === 23 · Schaubild-PNG-Wasserzeichen — report.js (Ausgabe Schritt C, v4.9.2) */
+(function () {
+  var REPORT = require('./report.js');
+  ok(typeof REPORT.shouldWatermark === 'function' && typeof REPORT.watermarkText === 'function',
+    'PNG: report.js exportiert shouldWatermark/watermarkText');
+
+  // Nur die Testversion trägt das Wasserzeichen; alles andere (voll, fehlend, unbekannt) nicht
+  ok(REPORT.shouldWatermark('test') === true, 'PNG: edition=test -> Wasserzeichen');
+  ok(REPORT.shouldWatermark('full') === false, 'PNG: edition=full -> kein Wasserzeichen');
+  ok(REPORT.shouldWatermark(undefined) === false, 'PNG: fehlende Kennung -> kein Wasserzeichen (sichere Voreinstellung)');
+  ok(REPORT.shouldWatermark(null) === false, 'PNG: null-Kennung -> kein Wasserzeichen');
+  ok(REPORT.shouldWatermark('Test') === false, 'PNG: Groß-/Kleinschreibung streng (nur exakt "test")');
+  ok(REPORT.shouldWatermark('') === false, 'PNG: leere Kennung -> kein Wasserzeichen');
+
+  // Wasserzeichen-Text dreisprachig, enthält den festgelegten Kern
+  ok(/Testversion/.test(REPORT.watermarkText('de')) && /Produktivnutzung/.test(REPORT.watermarkText('de')), 'PNG: DE-Wasserzeichentext korrekt');
+  ok(/Test version/.test(REPORT.watermarkText('en')), 'PNG: EN-Wasserzeichentext korrekt');
+  ok(/teste/.test(REPORT.watermarkText('pt')), 'PNG: PT-Wasserzeichentext korrekt');
+  ok(REPORT.watermarkText('xx') === REPORT.watermarkText('de'), 'PNG: unbekannte Sprache fällt auf DE zurück');
+  ok(REPORT.watermarkText('de').indexOf('DT-ProfiSchraube') === 0, 'PNG: Wasserzeichen beginnt mit Produktname');
+})();
+
 /* === Report ============================================================== */
 console.log('\n  A_S  berechnet  vs.  tabelliert (ISO 898-1)');
 console.log('  ---------------------------------------------');
