@@ -365,6 +365,9 @@ input.locked { background: var(--line-soft); color: var(--muted); cursor: defaul
 .modal-head .close { margin-left: auto; }
 .modal-body { padding: 16px 18px; }
 .modal-body p { margin: 0 0 12px; color: var(--fg); }
+.modal-body a { color: var(--accent); text-decoration: underline; }
+.modal-body .info-imprint { color: var(--muted); font-size: 13px; line-height: 1.7; }
+.modal-body .info-imprint em { font-style: italic; }
 .modal-range { font: 600 13px/1.4 var(--font-num); color: var(--accent); background: var(--accent-soft); padding: 8px 11px; border-radius: var(--radius-sm); margin-bottom: 12px; }
 .opt-list { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 6px; }
 .opt-list li { font-size: 13px; padding: 8px 10px; border: 1px solid var(--line-soft); border-radius: var(--radius-sm); }

@@ -105,7 +105,7 @@
       improveTitle: 'So wird die Ampel grün (Zielwert S ≥ 1,2):', improveCoupling: 'Danach die übrigen Nachweise erneut prüfen — die Sicherheiten hängen zusammen.',
       sub_F: 'Fließen (Streckgrenze)', sub_D: 'Dauerhaltbarkeit', sub_P: 'Flächenpressung', sub_G: 'Gleiten/Reibschluss', sub_A: 'Einschraubtiefe (R11)',
       na_D: 'keine Wechsel-/Schwelllast (F_Ao/F_Au)', na_P: 'keine Grenzpressung p_G angegeben', na_G: 'keine Querkraft (F_Q) — kein Gleitnachweis nötig', na_A: '„R11 prüfen" nicht aktiviert',
-      thrNote: 'Ampel sind Richtwerte (grün ≥ 1,2 · gelb ≥ 1,0 · rot < 1,0). Die erforderliche Sicherheit hängt vom Anwendungsfall ab.',
+      thrNote: 'Ampel sind Richtwerte (grün ≥ 1,2 · gelb ≥ 1,0 · rot < 1,0). Die erforderliche Sicherheit hängt vom Anwendungsfall ab.', devBy: 'Entwickelt von', imprintLine: 'Vollständiges Impressum und Datenschutzerklärung online unter:',
       preloadOk: 'F_Mmax ≤ F_Mzul (Montagevorspannung zulässig)', preloadBad: 'F_Mmax > F_Mzul — Schraube/Klasse zu klein',
       options: 'Auswahlmöglichkeiten', allowed: 'Zulässig', usual: 'Üblich', close: 'Schließen', fieldsDe: 'Feldtexte derzeit nur auf Deutsch.', rechenwegTitle: 'Rechenweg', rwHint: 'Jeder Schritt: allgemeine Formel, eingesetzte Werte, Ergebnis.', rwVerified: 'gegen Engine geprüft',
       saveCalc: 'Speichern (.dt)', loadCalc: 'Laden (.dt)', dtLabelPh: 'Bezeichnung (optional)',
@@ -132,7 +132,7 @@
       improveTitle: 'How to turn the indicator green (target S ≥ 1.2):', improveCoupling: 'Then re-check the other verifications — the safety factors are coupled.',
       sub_F: 'Yield', sub_D: 'Fatigue', sub_P: 'Surface pressure', sub_G: 'Slipping/friction grip', sub_A: 'Engagement (R11)',
       na_D: 'no fluctuating load (F_Ao/F_Au)', na_P: 'no limit pressure p_G given', na_G: 'no transverse force (F_Q) — no slip check needed', na_A: '“Check R11” not enabled',
-      thrNote: 'Indicator colours are guide values (green ≥ 1.2 · amber ≥ 1.0 · red < 1.0). Required safety depends on the application.',
+      thrNote: 'Indicator colours are guide values (green ≥ 1.2 · amber ≥ 1.0 · red < 1.0). Required safety depends on the application.', devBy: 'Developed by', imprintLine: 'Full imprint and privacy policy online at:',
       preloadOk: 'F_Mmax ≤ F_Mzul (assembly preload admissible)', preloadBad: 'F_Mmax > F_Mzul — bolt/class too small',
       options: 'Options', allowed: 'Allowed', usual: 'Typical', close: 'Close', fieldsDe: 'Field texts are German for now.', rechenwegTitle: 'Calculation path', rwHint: 'Each step: general formula, inserted values, result.', rwVerified: 'checked against engine',
       saveCalc: 'Save (.dt)', loadCalc: 'Load (.dt)', dtLabelPh: 'Label (optional)',
@@ -159,7 +159,7 @@
       improveTitle: 'Como tornar o indicador verde (alvo S ≥ 1,2):', improveCoupling: 'Depois, reavalie as outras verificações — os fatores de segurança estão acoplados.',
       sub_F: 'Escoamento', sub_D: 'Fadiga', sub_P: 'Pressão superficial', sub_G: 'Escorregamento/atrito', sub_A: 'Aperto (R11)',
       na_D: 'sem carga alternada (F_Ao/F_Au)', na_P: 'sem pressão limite p_G', na_G: 'sem força transversal (F_Q) — sem verificação de escorregamento', na_A: '“Verificar R11” não ativado',
-      thrNote: 'As cores são valores indicativos (verde ≥ 1,2 · amarelo ≥ 1,0 · vermelho < 1,0). A segurança exigida depende da aplicação.',
+      thrNote: 'As cores são valores indicativos (verde ≥ 1,2 · amarelo ≥ 1,0 · vermelho < 1,0). A segurança exigida depende da aplicação.', devBy: 'Desenvolvido por', imprintLine: 'Aviso legal e política de privacidade completos online em:',
       preloadOk: 'F_Mmax ≤ F_Mzul (pré-tensão de montagem admissível)', preloadBad: 'F_Mmax > F_Mzul — parafuso/classe pequenos demais',
       options: 'Opções', allowed: 'Permitido', usual: 'Habitual', close: 'Fechar', fieldsDe: 'Os textos dos campos estão em alemão por agora.', rechenwegTitle: 'Percurso de cálculo', rwHint: 'Cada passo: fórmula geral, valores inseridos, resultado.', rwVerified: 'verificado com o motor',
       saveCalc: 'Guardar (.dt)', loadCalc: 'Carregar (.dt)', dtLabelPh: 'Designação (opcional)',
@@ -406,6 +406,24 @@
     b.appendChild(el('p', null, t('tagline') + '.'));
     b.appendChild(el('p', null, t('footNote').replace('{v}', 'v' + String(SOLVER.VERSION || '').replace('-engine', ''))));
     b.appendChild(el('p', null, t('thrNote')));
+    // Impressum/Entwickler — für Test- und Vollversion identisch (kein Editions-Zusatz)
+    var imp = el('p', 'info-imprint');
+    imp.appendChild(document.createTextNode(t('devBy') + ': Dieter Tepe'));
+    imp.appendChild(el('br'));
+    imp.appendChild(document.createTextNode('Mühlenstraße 2, 48477 Dreierwalde'));
+    imp.appendChild(el('br'));
+    imp.appendChild(document.createTextNode('E-Mail: '));
+    var mail = el('a', null, 'Dieter.Tepe@live.de'); mail.href = 'mailto:Dieter.Tepe@live.de';
+    imp.appendChild(mail);
+    b.appendChild(imp);
+    // Landingpage (öffnet aktuell die Dreieck-Landingpage; bewusst so, wird später erweitert)
+    var lp = el('p', 'info-imprint');
+    lp.appendChild(el('em', null, t('imprintLine')));
+    lp.appendChild(el('br'));
+    var link = el('a', null, 'www.dt-profidreieck.de');
+    link.href = 'https://www.dt-profidreieck.de/'; link.target = '_blank'; link.rel = 'noopener noreferrer';
+    lp.appendChild(link);
+    b.appendChild(lp);
     openModal();
   }
 
