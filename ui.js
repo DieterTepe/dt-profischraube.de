@@ -99,7 +99,7 @@
       grp_Schraube: 'Schraube & Werkstoff', grp_Anziehen: 'Reibung & Anziehen', grp_Geometrie: 'Verbindung & Geometrie',
       grp_Belastung: 'Belastung', grp_Setzen: 'Setzen & Trennflächen', grp_Nachweise: 'Nachweise & Optionen',
       statusOk: 'Berechnung vollständig.', statusInvalid: 'Eingaben unvollständig oder ungültig — bitte korrigieren.',
-      verdictOk: 'Verbindung ausreichend dimensioniert', verdictWarn: 'Verbindung knapp bemessen', verdictBad: 'Verbindung nicht ausreichend', verdictOkNb: 'Verbindung ausreichend dimensioniert — nicht alle Nachweise geführt', vbBad: 'Nicht erfüllt', vbWarn: 'Knapp', vbNb: 'Nicht geführt', printBtn: 'Drucken / PDF', printTitle: 'Bericht drucken oder als PDF speichern', rtfBtn: 'Word (.rtf)', rtfTitle: 'Bericht als Word-Dokument (.rtf) speichern', csvBtn: 'CSV', csvTitle: 'Kennwerte als CSV-Tabelle speichern', pngBtn: 'Bild (.png)', pngTitle: 'Verspannungsschaubild als PNG-Bild speichern', pngNoViz: 'Kein Schaubild vorhanden — bitte zuerst rechnen.', pngSaved: 'Schaubild (.png) gespeichert.', pngErr: 'Bild konnte nicht erzeugt werden.', editionFull: 'Vollversion', editionTest: 'Testversion', lockTitle: 'Nur in der Vollversion', lockBody: 'Diese Funktion ist in der Testversion nicht verfügbar. In der Vollversion stehen Speichern, Laden und alle Ausgaben (Druck/PDF, Word, CSV) zur Verfügung.', repNoCalc: 'Bitte zuerst eine gültige Berechnung durchführen.', repErrModule: 'Bericht-Modul nicht geladen (report.js).', repSavedRtf: 'Word-Bericht (.rtf) gespeichert.', repSavedCsv: 'CSV-Datei gespeichert.',
+      verdictOk: 'Verbindung ausreichend dimensioniert', verdictWarn: 'Verbindung knapp bemessen', verdictBad: 'Verbindung nicht ausreichend', verdictOkNb: 'Verbindung ausreichend dimensioniert — nicht alle Nachweise geführt', vbBad: 'Nicht erfüllt', vbWarn: 'Knapp', vbNb: 'Nicht geführt', printBtn: 'Drucken / PDF', printTitle: 'Bericht drucken oder als PDF speichern', rtfBtn: 'Word (.rtf)', rtfTitle: 'Bericht als Word-Dokument (.rtf) speichern', csvBtn: 'CSV', csvTitle: 'Kennwerte als CSV-Tabelle speichern', pngBtn: 'Bild (.png)', pngTitle: 'Verspannungsschaubild als PNG-Bild speichern', pngNoViz: 'Kein Schaubild vorhanden — bitte zuerst rechnen.', pngSaved: 'Schaubild (.png) gespeichert.', pngErr: 'Bild konnte nicht erzeugt werden.', editionFull: 'Vollversion', editionTest: 'Testversion', actTitle: 'Aktivierung', actPrompt: 'Bitte Namen und Lizenzschlüssel zur Aktivierung eingeben.', actName: 'Name', actNamePh: 'Dein Name', actKey: 'Lizenzschlüssel', actKeyPh: 'Lizenzschlüssel von Digistore24', actActivate: 'Aktivieren', actLater: 'Später', lockTitle: 'Nur in der Vollversion', lockBody: 'Diese Funktion ist in der Testversion nicht verfügbar. In der Vollversion stehen Speichern, Laden und alle Ausgaben (Druck/PDF, Word, CSV) zur Verfügung.', repNoCalc: 'Bitte zuerst eine gültige Berechnung durchführen.', repErrModule: 'Bericht-Modul nicht geladen (report.js).', repSavedRtf: 'Word-Bericht (.rtf) gespeichert.', repSavedCsv: 'CSV-Datei gespeichert.',
       kvCaption: 'Weitere Kennwerte', kvEngage: 'R11 – Mindesteinschraubtiefe', recommended: 'empfohlen', nb: 'n. b.', customOpt: '— eigene Eingabe —', rmHintPrefix: 'Richtwert', rmHintCustom: 'eigener Wert',
       tagWarn: 'Grenze', tagAssume: 'Annahme', tagPending: 'offen', tagFix: 'Tipp',
       improveTitle: 'So wird die Ampel grün (Zielwert S ≥ 1,2):', improveCoupling: 'Danach die übrigen Nachweise erneut prüfen — die Sicherheiten hängen zusammen.',
@@ -126,7 +126,7 @@
       grp_Schraube: 'Bolt & material', grp_Anziehen: 'Friction & tightening', grp_Geometrie: 'Joint & geometry',
       grp_Belastung: 'Loading', grp_Setzen: 'Embedding & interfaces', grp_Nachweise: 'Verifications & options',
       statusOk: 'Calculation complete.', statusInvalid: 'Input incomplete or invalid — please correct.',
-      verdictOk: 'Joint adequately dimensioned', verdictWarn: 'Joint marginally dimensioned', verdictBad: 'Joint not adequate', verdictOkNb: 'Joint adequately dimensioned — not all verifications performed', vbBad: 'Not met', vbWarn: 'Marginal', vbNb: 'Not performed', printBtn: 'Print / PDF', printTitle: 'Print the report or save as PDF', rtfBtn: 'Word (.rtf)', rtfTitle: 'Save report as Word document (.rtf)', csvBtn: 'CSV', csvTitle: 'Save key values as CSV table', pngBtn: 'Image (.png)', pngTitle: 'Save the joint diagram as a PNG image', pngNoViz: 'No diagram yet — please run a calculation first.', pngSaved: 'Diagram (.png) saved.', pngErr: 'Could not generate image.', editionFull: 'Full version', editionTest: 'Test version', lockTitle: 'Full version only', lockBody: 'This function is not available in the test version. The full version provides saving, loading and all exports (print/PDF, Word, CSV).', repNoCalc: 'Please run a valid calculation first.', repErrModule: 'Report module not loaded (report.js).', repSavedRtf: 'Word report (.rtf) saved.', repSavedCsv: 'CSV file saved.',
+      verdictOk: 'Joint adequately dimensioned', verdictWarn: 'Joint marginally dimensioned', verdictBad: 'Joint not adequate', verdictOkNb: 'Joint adequately dimensioned — not all verifications performed', vbBad: 'Not met', vbWarn: 'Marginal', vbNb: 'Not performed', printBtn: 'Print / PDF', printTitle: 'Print the report or save as PDF', rtfBtn: 'Word (.rtf)', rtfTitle: 'Save report as Word document (.rtf)', csvBtn: 'CSV', csvTitle: 'Save key values as CSV table', pngBtn: 'Image (.png)', pngTitle: 'Save the joint diagram as a PNG image', pngNoViz: 'No diagram yet — please run a calculation first.', pngSaved: 'Diagram (.png) saved.', pngErr: 'Could not generate image.', editionFull: 'Full version', editionTest: 'Test version', actTitle: 'Activation', actPrompt: 'Please enter your name and license key to activate.', actName: 'Name', actNamePh: 'Your name', actKey: 'License key', actKeyPh: 'License key from Digistore24', actActivate: 'Activate', actLater: 'Later', lockTitle: 'Full version only', lockBody: 'This function is not available in the test version. The full version provides saving, loading and all exports (print/PDF, Word, CSV).', repNoCalc: 'Please run a valid calculation first.', repErrModule: 'Report module not loaded (report.js).', repSavedRtf: 'Word report (.rtf) saved.', repSavedCsv: 'CSV file saved.',
       kvCaption: 'Further values', kvEngage: 'R11 – minimum length of engagement', recommended: 'recommended', nb: 'n/a', customOpt: '— custom input —', rmHintPrefix: 'Guide value', rmHintCustom: 'custom value',
       tagWarn: 'limit', tagAssume: 'assumption', tagPending: 'open', tagFix: 'tip',
       improveTitle: 'How to turn the indicator green (target S ≥ 1.2):', improveCoupling: 'Then re-check the other verifications — the safety factors are coupled.',
@@ -153,7 +153,7 @@
       grp_Schraube: 'Parafuso e material', grp_Anziehen: 'Atrito e aperto', grp_Geometrie: 'União e geometria',
       grp_Belastung: 'Carregamento', grp_Setzen: 'Assentamento e interfaces', grp_Nachweise: 'Verificações e opções',
       statusOk: 'Cálculo completo.', statusInvalid: 'Entrada incompleta ou inválida — corrija.',
-      verdictOk: 'Junção adequadamente dimensionada', verdictWarn: 'Junção no limite', verdictBad: 'Junção insuficiente', verdictOkNb: 'Junção adequadamente dimensionada — nem todas as verificações realizadas', vbBad: 'Não cumprido', vbWarn: 'No limite', vbNb: 'Não realizado', printBtn: 'Imprimir / PDF', printTitle: 'Imprimir o relatório ou salvar como PDF', rtfBtn: 'Word (.rtf)', rtfTitle: 'Salvar relatório como documento Word (.rtf)', csvBtn: 'CSV', csvTitle: 'Salvar valores como tabela CSV', pngBtn: 'Imagem (.png)', pngTitle: 'Salvar o diagrama de aperto como imagem PNG', pngNoViz: 'Nenhum diagrama ainda — faça primeiro um cálculo.', pngSaved: 'Diagrama (.png) salvo.', pngErr: 'Não foi possível gerar a imagem.', editionFull: 'Versão completa', editionTest: 'Versão de teste', lockTitle: 'Apenas na versão completa', lockBody: 'Esta função não está disponível na versão de teste. A versão completa oferece salvar, carregar e todas as exportações (impressão/PDF, Word, CSV).', repNoCalc: 'Faça primeiro um cálculo válido.', repErrModule: 'Módulo de relatório não carregado (report.js).', repSavedRtf: 'Relatório Word (.rtf) salvo.', repSavedCsv: 'Arquivo CSV salvo.',
+      verdictOk: 'Junção adequadamente dimensionada', verdictWarn: 'Junção no limite', verdictBad: 'Junção insuficiente', verdictOkNb: 'Junção adequadamente dimensionada — nem todas as verificações realizadas', vbBad: 'Não cumprido', vbWarn: 'No limite', vbNb: 'Não realizado', printBtn: 'Imprimir / PDF', printTitle: 'Imprimir o relatório ou salvar como PDF', rtfBtn: 'Word (.rtf)', rtfTitle: 'Salvar relatório como documento Word (.rtf)', csvBtn: 'CSV', csvTitle: 'Salvar valores como tabela CSV', pngBtn: 'Imagem (.png)', pngTitle: 'Salvar o diagrama de aperto como imagem PNG', pngNoViz: 'Nenhum diagrama ainda — faça primeiro um cálculo.', pngSaved: 'Diagrama (.png) salvo.', pngErr: 'Não foi possível gerar a imagem.', editionFull: 'Versão completa', editionTest: 'Versão de teste', actTitle: 'Ativação', actPrompt: 'Insira seu nome e a chave de licença para ativar.', actName: 'Nome', actNamePh: 'Seu nome', actKey: 'Chave de licença', actKeyPh: 'Chave de licença da Digistore24', actActivate: 'Ativar', actLater: 'Mais tarde', lockTitle: 'Apenas na versão completa', lockBody: 'Esta função não está disponível na versão de teste. A versão completa oferece salvar, carregar e todas as exportações (impressão/PDF, Word, CSV).', repNoCalc: 'Faça primeiro um cálculo válido.', repErrModule: 'Módulo de relatório não carregado (report.js).', repSavedRtf: 'Relatório Word (.rtf) salvo.', repSavedCsv: 'Arquivo CSV salvo.',
       kvCaption: 'Outros valores', kvEngage: 'R11 – profundidade mínima de aperto', recommended: 'recomendado', nb: 'n/d', customOpt: '— entrada própria —', rmHintPrefix: 'Valor indicativo', rmHintCustom: 'valor próprio',
       tagWarn: 'limite', tagAssume: 'suposição', tagPending: 'pendente', tagFix: 'dica',
       improveTitle: 'Como tornar o indicador verde (alvo S ≥ 1,2):', improveCoupling: 'Depois, reavalie as outras verificações — os fatores de segurança estão acoplados.',
@@ -348,12 +348,57 @@
     var b = $('modalBody'); if (b) { b.innerHTML = ''; b.appendChild(el('p', null, t('lockBody'))); }
     openModal();
   }
-  // Editions-Hinweisbalken oben befüllen (Test deutlich, Voll dezent), dreisprachig.
+  // Editions-Anzeige: die Testversion behält den deutlichen gelben Balken oben;
+  // die Vollversion blendet ihn aus und zeigt stattdessen eine dezente
+  // Lizenznehmer-Zeile unter dem VDI-Untertitel (Personalisierung, kein Schutz).
   function applyEdition() {
-    var bar = $('editionBar'); if (!bar) return;
-    bar.className = 'edition-bar ' + EDITION;
-    bar.textContent = t(EDITION === 'test' ? 'editionTest' : 'editionFull');
+    var bar = $('editionBar'), line = $('licenseLine');
+    if (EDITION === 'test') {
+      if (bar) { bar.hidden = false; bar.className = 'edition-bar test'; bar.textContent = t('editionTest'); }
+      if (line) { line.textContent = ''; line.hidden = true; }
+    } else {
+      if (bar) { bar.hidden = true; bar.textContent = ''; }
+      if (line) {
+        var name = storedLicensee();
+        line.textContent = REPORT ? REPORT.editionLicenseeLine(t('editionFull'), name, lang)
+                                  : (t('editionFull') + (name ? ' · ' + name : ''));
+        line.hidden = false;
+      }
+    }
   }
+
+  /* ---- Lizenznehmer-Registrierung (nur Vollversion; Personalisierung, KEIN
+   * Zugangsschutz). Name + Schlüssel liegen in localStorage; die Vollversion läuft
+   * ohne Eintrag vollständig weiter — der Eintrag steuert nur, ob "· lizenziert für
+   * <Name>" oben und im Berichtskopf erscheint. Nutzt das bestehende Modal-Muster. */
+  var LS_LIC_NAME = 'dts-licensee', LS_LIC_KEY = 'dts-license-key';
+  function storedLicensee() { try { return localStorage.getItem(LS_LIC_NAME) || ''; } catch (e) { return ''; } }
+  function saveLicensee(name, key) { try { localStorage.setItem(LS_LIC_NAME, name); localStorage.setItem(LS_LIC_KEY, key || ''); } catch (e) {} }
+  function clearLicensee() { try { localStorage.removeItem(LS_LIC_NAME); localStorage.removeItem(LS_LIC_KEY); } catch (e) {} }
+  function licInputsFilled() {
+    var n = $('licName'), k = $('licKey');
+    var nameOk = REPORT ? (REPORT.licenseeName(n ? n.value : '') !== '') : !!(n && n.value.trim());
+    return nameOk && !!(k && String(k.value).trim());
+  }
+  function updateActivateBtn() { var b = $('licActivate'); if (b) b.disabled = !licInputsFilled(); }
+  function openActivation() {
+    var m = $('activation'); if (!m) return;
+    var n = $('licName'), k = $('licKey');
+    if (n) n.value = ''; if (k) k.value = '';
+    m.classList.add('open');
+    updateActivateBtn();
+    if (n) n.focus();
+  }
+  function closeActivation() { var m = $('activation'); if (m) m.classList.remove('open'); }
+  function doActivate() {
+    if (!licInputsFilled()) return;                 // beide Felder nötig (sanfter Anstoß, kein Zwang)
+    var n = $('licName'), k = $('licKey');
+    var name = REPORT ? REPORT.licenseeName(n.value) : n.value.trim();
+    saveLicensee(name, String(k.value).trim());     // Schlüssel unverändert übernommen — keine Formatprüfung
+    closeActivation();
+    applyEdition();                                 // Kopfzeile sofort aktualisieren
+  }
+  function doLater() { closeActivation(); }          // ohne Speichern -> Dialog erscheint beim nächsten Start erneut
 
   function openInfo() {
     $('modalTitle').textContent = 'DT-ProfiSchraube';
@@ -1137,7 +1182,8 @@
     var labelEl = $('dtLabel');
     return {
       R: R, input: input, lang: lang, label: labelEl ? labelEl.value : '', date: new Date(),
-      engine: SOLVER.VERSION, verdictLevel: v.level, verdictText: verdictMainText(v), safetyRows: rows, steps: steps
+      engine: SOLVER.VERSION, verdictLevel: v.level, verdictText: verdictMainText(v), safetyRows: rows, steps: steps,
+      licensee: storedLicensee()
     };
   }
 
@@ -1228,7 +1274,7 @@
     on('infoBtn', 'click', openInfo);
     on('modalClose', 'click', closeModal);
     on('modal', 'click', function (e) { if (e.target === $('modal')) closeModal(); });
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeModal(); closeActivation(); } });
     on('calcBtn', 'click', compute);
     on('resetBtn', 'click', resetForm);
     on('advToggle', 'change', function () { document.body.classList.toggle('show-adv', this.checked); });
@@ -1257,6 +1303,31 @@
     // Startbeispiel laden (validiertes M12-Beispiel), damit sofort etwas Sinnvolles steht
     var list = SOLVER.listPresets();
     if (list.length) { var sel = $('presetSel'); if (sel) { sel.value = list[0].id; loadPreset(list[0].id); } }
+
+    // Aktivierungsdialog verdrahten (nur Vollversion relevant)
+    on('licActivate', 'click', doActivate);
+    on('licLater', 'click', doLater);
+    on('licName', 'input', updateActivateBtn);
+    on('licKey', 'input', updateActivateBtn);
+    on('activation', 'click', function (e) { if (e.target === $('activation')) closeActivation(); });
+
+    // Versteckter Reset: 10 s Dauerdruck auf den Wortmark löscht die Lizenzdaten
+    // still (ohne Hinweis); die Kopfzeile fällt danach auf "Vollversion" zurück.
+    var mark = document.querySelector('.brand .mark');
+    if (mark) {
+      var lpTimer = null;
+      var lpStart = function () { if (lpTimer) return; lpTimer = setTimeout(function () { lpTimer = null; clearLicensee(); applyEdition(); }, 10000); };
+      var lpCancel = function () { if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; } };
+      mark.addEventListener('mousedown', lpStart);
+      mark.addEventListener('mouseup', lpCancel);
+      mark.addEventListener('mouseleave', lpCancel);
+      mark.addEventListener('touchstart', lpStart, { passive: true });
+      mark.addEventListener('touchend', lpCancel);
+      mark.addEventListener('touchcancel', lpCancel);
+    }
+
+    // Erst-Start-Aktivierung: nur Vollversion und nur, wenn noch nichts hinterlegt ist.
+    if (EDITION !== 'test' && !storedLicensee()) openActivation();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();

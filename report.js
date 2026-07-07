@@ -18,7 +18,9 @@
  *   verdictLevel, // 'ok'|'warn'|'bad'  (aus ui.overallVerdict — EINZIGE Quelle)
  *   verdictText,  // fertige Ampel-Hauptzeile (aus dem UI, konsistent zum Schirm)
  *   safetyRows,   // [{ key, label, val, status }]  status: 'ok'|'warn'|'bad'|'nb'
- *   steps         // Rechenweg-Schritte (rechenweg.build(...).steps)
+ *   steps,        // Rechenweg-Schritte (rechenweg.build(...).steps)
+ *   licensee      // (optional) Name des Lizenznehmers -> Berichtskopf;
+ *                 //            leer/fehlt -> Zeile entfällt (Leerzustand)
  * }
  *
  * Arbeitsteilung (bewusst, keine Duplikation):
@@ -43,6 +45,8 @@
     labelCap:  { de: 'Bezeichnung', en: 'Designation', pt: 'Designação' },
     dateCap:   { de: 'Datum', en: 'Date', pt: 'Data' },
     engineCap: { de: 'Rechenkern', en: 'Engine', pt: 'Motor de cálculo' },
+    licCap:    { de: 'Lizenznehmer', en: 'Licensee', pt: 'Licenciado' },
+    licFor:    { de: 'lizenziert für', en: 'licensed to', pt: 'licenciado para' },
     secVerdict:{ de: 'Gesamtergebnis', en: 'Overall result', pt: 'Resultado geral' },
     secSafety: { de: 'Sicherheiten', en: 'Safety factors', pt: 'Fatores de segurança' },
     secInput:  { de: 'Eingaben', en: 'Inputs', pt: 'Dados de entrada' },
@@ -77,6 +81,33 @@
   ];
 
   function pick(o, lang) { return (o && (o[lang] || o.de)) || ''; }
+
+  /* ---- Lizenznehmer (reiner Textbaustein + Leerzustand; Node-testbar) --------
+   * EINZIGE Quelle für die Lizenznehmer-Darstellung: der Berichtskopf (RTF/CSV,
+   * hier) UND die Kopfzeilen-Zeile am Bildschirm (Baustein 2 stellt "Vollversion · "
+   * vor licenseePhrase). KEIN Zugangsschutz — nur die sichtbare Personalisierung,
+   * die eine weitergegebene Kopie unattraktiv macht. Leerer/fehlender Name ->
+   * sauberer Leerzustand (kein Bindestrich-Rest, keine Kopfzeile). */
+  function licenseeName(name) {
+    if (name == null) return '';
+    return String(name).replace(/\s+/g, ' ').trim();
+  }
+  function licenseePhrase(name, lang) {
+    var n = licenseeName(name);
+    return n ? (pick(T.licFor, lang) + ' ' + n) : '';
+  }
+  function licenseeField(name, lang) {
+    var n = licenseeName(name);
+    return n ? { label: pick(T.licCap, lang), value: n } : null;
+  }
+  /* Zusammengesetzte Bildschirm-Kopfzeile: "<Edition> · lizenziert für <Name>"
+   * bzw. nur "<Edition>", wenn kein Name (Leerzustand, kein Trenner-Rest). Das
+   * Editions-Label ("Vollversion") wird vom UI übergeben, damit es dort seine
+   * einzige Quelle behält; die Verbindungsphrase kommt aus licenseePhrase. */
+  function editionLicenseeLine(editionLabel, name, lang) {
+    var phrase = licenseePhrase(name, lang);
+    return phrase ? ((editionLabel || '') + ' · ' + phrase) : (editionLabel || '');
+  }
 
   /* ---- Testversion-Wasserzeichen (reine, testbare Logik; Zeichnen macht das UI) */
   var WATERMARK = {
@@ -150,7 +181,8 @@
       norm: pick(T.norm, lang),
       label: ctx.label || '',
       date: dateStr,
-      engine: ctx.engine || ''
+      engine: ctx.engine || '',
+      licensee: licenseeField(ctx.licensee, lang)
     };
 
     // Sicherheiten (Labels/Status kommen aus ctx.safetyRows — UI ist die Quelle)
@@ -218,6 +250,7 @@
     function row() { var a = Array.prototype.slice.call(arguments); lines.push(a.map(function (c) { return csvCell(c, sep); }).join(sep)); }
 
     row(pick(T.labelCap, lang), m.header.label);
+    if (m.header.licensee) row(m.header.licensee.label, m.header.licensee.value);
     row(pick(T.dateCap, lang), m.header.date);
     row(pick(T.engineCap, lang), m.header.engine);
     row(pick(T.norm, lang));
@@ -283,6 +316,7 @@
     out += rtfPar(m.header.subtitle);
     out += rtfPar(m.header.norm);
     if (m.header.label) out += rtfPar(pick(T.labelCap, lang) + ': ' + m.header.label);
+    if (m.header.licensee) out += rtfPar(m.header.licensee.label + ': ' + m.header.licensee.value);
     out += rtfPar(pick(T.dateCap, lang) + ': ' + m.header.date + '    ' + pick(T.engineCap, lang) + ': ' + m.header.engine);
 
     // Gesamtergebnis (Ampel-Hauptzeile aus dem UI, hervorgehoben)
@@ -327,5 +361,5 @@
     return out;
   }
 
-  return { VERSION: VERSION, buildModel: buildModel, buildRTF: buildRTF, buildCSV: buildCSV, watermarkText: watermarkText, shouldWatermark: shouldWatermark, isFeatureAllowed: isFeatureAllowed, GATED_FEATURES: GATED_FEATURES };
+  return { VERSION: VERSION, buildModel: buildModel, buildRTF: buildRTF, buildCSV: buildCSV, watermarkText: watermarkText, shouldWatermark: shouldWatermark, isFeatureAllowed: isFeatureAllowed, GATED_FEATURES: GATED_FEATURES, licenseeName: licenseeName, licenseePhrase: licenseePhrase, licenseeField: licenseeField, editionLicenseeLine: editionLicenseeLine };
 });

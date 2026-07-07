@@ -1523,6 +1523,99 @@ ok(DATA.PRESETS.grauguss_esv_m12.input.p_G === DATA.TAU_RATIO.gjl.pG, 'Demo-Pres
   });
 })();
 
+/* === 25 · Lizenznehmer im Berichtskopf — report.js (Registrierung Baustein 1) */
+(function () {
+  var REPORT = require('./report.js');
+  var RW = require('./rechenweg.js');
+  ok(typeof REPORT.licenseeName === 'function' && typeof REPORT.licenseePhrase === 'function' && typeof REPORT.licenseeField === 'function',
+    'Lizenz: report.js exportiert licenseeName/licenseePhrase/licenseeField');
+
+  // Namens-Säuberung: trim + Whitespace-Kollaps; leer/fehlt -> Leerstring
+  ok(REPORT.licenseeName('  Max  Mustermann ') === 'Max Mustermann', 'Lizenz: Name getrimmt + Whitespace kollabiert');
+  ok(REPORT.licenseeName('') === '' && REPORT.licenseeName(null) === '' && REPORT.licenseeName(undefined) === '',
+    'Lizenz: leerer/fehlender Name -> Leerstring');
+  ok(REPORT.licenseeName('   ') === '', 'Lizenz: reiner Whitespace -> Leerstring (Leerzustand)');
+
+  // Verbindungsphrase dreisprachig (Grundlage der Bildschirmzeile "Vollversion · …")
+  ok(REPORT.licenseePhrase('Max Mustermann', 'de') === 'lizenziert für Max Mustermann', 'Lizenz: DE-Phrase korrekt');
+  ok(REPORT.licenseePhrase('Max Mustermann', 'en') === 'licensed to Max Mustermann', 'Lizenz: EN-Phrase korrekt');
+  ok(REPORT.licenseePhrase('Max Mustermann', 'pt') === 'licenciado para Max Mustermann', 'Lizenz: PT-Phrase korrekt');
+  ok(REPORT.licenseePhrase('', 'de') === '' && REPORT.licenseePhrase('  ', 'en') === '', 'Lizenz: kein Name -> leere Phrase (kein Bindestrich-Rest)');
+
+  // Feld für den Berichtskopf: {label,value} oder null
+  var f = REPORT.licenseeField('Max Mustermann', 'de');
+  ok(f && f.label === 'Lizenznehmer' && f.value === 'Max Mustermann', 'Lizenz: DE-Feld {label,value} korrekt');
+  ok(REPORT.licenseeField('Max', 'en').label === 'Licensee', 'Lizenz: EN-Label "Licensee"');
+  ok(REPORT.licenseeField('Max', 'pt').label === 'Licenciado', 'Lizenz: PT-Label "Licenciado"');
+  ok(REPORT.licenseeField('', 'de') === null && REPORT.licenseeField(null, 'de') === null, 'Lizenz: kein Name -> null (Kopfzeile entfällt)');
+
+  // Kontext wie im UI, plus optionaler Lizenznehmer
+  function ctxFor(key, lang, lic) {
+    var input = DATA.PRESETS[key].input, R = S.computeJoint(input);
+    var safeties = [R.S_F, R.fatigue ? R.fatigue.S_D : null, R.pressure ? R.pressure.S_P : null,
+      R.slip ? R.slip.S_G : null, R.engagement ? R.engagement.S_A : null];
+    var keys = ['S_F', 'S_D', 'S_P', 'S_G', 'S_A'];
+    var rows = keys.map(function (k, i) { return { key: k, label: k, val: safeties[i], status: 'ok' }; });
+    var steps = RW.build(R, input, { lang: lang }).steps;
+    var ctx = { R: R, input: input, lang: lang, label: 'Test', date: new Date('2026-07-06T08:30:00'),
+      engine: S.VERSION, verdictLevel: 'ok', verdictText: 'Urteil', safetyRows: rows, steps: steps };
+    if (lic !== undefined) ctx.licensee = lic;
+    return ctx;
+  }
+
+  // Modell: header.licensee gesetzt bzw. null (Leerzustand)
+  ok(REPORT.buildModel(ctxFor('hydraulikzylinder', 'de', 'Max Mustermann')).header.licensee.value === 'Max Mustermann',
+    'Lizenz: buildModel trägt Lizenznehmer in den Kopf');
+  ok(REPORT.buildModel(ctxFor('hydraulikzylinder', 'de')).header.licensee === null,
+    'Lizenz: ohne Lizenznehmer bleibt der Kopf leer (null)');
+  ok(REPORT.buildModel(ctxFor('hydraulikzylinder', 'de', '   ')).header.licensee === null,
+    'Lizenz: reiner Whitespace zählt als kein Lizenznehmer');
+
+  // RTF: Label+Name erscheinen, wenn gesetzt — und fehlen, wenn nicht
+  var rtfWith = REPORT.buildRTF(ctxFor('hydraulikzylinder', 'de', 'Max Mustermann'));
+  var rtfWithout = REPORT.buildRTF(ctxFor('hydraulikzylinder', 'de'));
+  ok(rtfWith.indexOf('Lizenznehmer: Max Mustermann') >= 0, 'Lizenz: RTF-Kopf zeigt Lizenznehmer');
+  ok(rtfWithout.indexOf('Lizenznehmer') === -1, 'Lizenz: RTF ohne Lizenznehmer enthält die Zeile nicht');
+  ok(rtfWith.charAt(0) === '{' && rtfWith.charAt(rtfWith.length - 1) === '}', 'Lizenz: RTF-Rahmen mit Lizenznehmer intakt');
+  ok((rtfWith.match(/{/g) || []).length === (rtfWith.match(/}/g) || []).length, 'Lizenz: RTF-Klammern mit Lizenznehmer balanciert');
+  // Name mit RTF-Sonderzeichen + Unicode wird escaped (nicht roh)
+  var rtfSpecial = REPORT.buildRTF(ctxFor('hydraulikzylinder', 'de', 'Müller {GmbH}'));
+  ok(rtfSpecial.indexOf('Müller {GmbH}') === -1, 'Lizenz: Name mit Umlaut/Klammern nicht roh übernommen');
+  ok(rtfSpecial.indexOf('\\u252?') >= 0 && rtfSpecial.indexOf('\\{GmbH\\}') >= 0, 'Lizenz: ü + {} im Namen korrekt escaped');
+  ok(!/[^\x00-\x7F]/.test(rtfSpecial), 'Lizenz: RTF mit Sonderzeichen-Namen bleibt vollständig ASCII-escaped');
+
+  // CSV: Lizenznehmer-Zeile erscheint bzw. fehlt; Trenner sprachabhängig
+  var csvDeWith = REPORT.buildCSV(ctxFor('hydraulikzylinder', 'de', 'Max Mustermann'));
+  ok(csvDeWith.indexOf('Lizenznehmer;Max Mustermann') >= 0, 'Lizenz: DE-CSV-Zeile "Lizenznehmer;Name"');
+  ok(REPORT.buildCSV(ctxFor('hydraulikzylinder', 'de')).indexOf('Lizenznehmer') === -1, 'Lizenz: CSV ohne Lizenznehmer enthält die Zeile nicht');
+  var csvEnWith = REPORT.buildCSV(ctxFor('hydraulikzylinder', 'en', 'Max Mustermann'));
+  ok(csvEnWith.indexOf('Licensee,Max Mustermann') >= 0, 'Lizenz: EN-CSV-Zeile "Licensee,Name" mit Komma-Trenner');
+  // Name mit Trennerzeichen wird gequotet
+  var csvSemi = REPORT.buildCSV(ctxFor('hydraulikzylinder', 'de', 'Muster; GmbH'));
+  ok(csvSemi.indexOf('"Muster; GmbH"') >= 0, 'Lizenz: CSV quotet Namen mit Semikolon');
+})();
+
+/* === 26 · Bildschirm-Kopfzeile Lizenznehmer — report.js (Registrierung Baustein 2) */
+(function () {
+  var REPORT = require('./report.js');
+  ok(typeof REPORT.editionLicenseeLine === 'function', 'Lizenz2: report.js exportiert editionLicenseeLine');
+
+  // Mit Name: "<Edition> · lizenziert für <Name>" (Edition-Label kommt vom UI, dreisprachig)
+  ok(REPORT.editionLicenseeLine('Vollversion', 'Max Mustermann', 'de') === 'Vollversion · lizenziert für Max Mustermann', 'Lizenz2: DE-Zeile mit Name');
+  ok(REPORT.editionLicenseeLine('Full version', 'Max Mustermann', 'en') === 'Full version · licensed to Max Mustermann', 'Lizenz2: EN-Zeile mit Name');
+  ok(REPORT.editionLicenseeLine('Versão completa', 'Max Mustermann', 'pt') === 'Versão completa · licenciado para Max Mustermann', 'Lizenz2: PT-Zeile mit Name');
+
+  // Leerzustand: nur Edition-Label, KEIN Trenner-Rest
+  ok(REPORT.editionLicenseeLine('Vollversion', '', 'de') === 'Vollversion', 'Lizenz2: ohne Name nur Edition (kein Trenner-Rest)');
+  ok(REPORT.editionLicenseeLine('Vollversion', '   ', 'de') === 'Vollversion', 'Lizenz2: reiner Whitespace -> nur Edition');
+  ok(REPORT.editionLicenseeLine('Vollversion', null, 'de') === 'Vollversion', 'Lizenz2: null-Name -> nur Edition');
+
+  // Defensiv: kein Label + kein Name -> leere Zeichenkette
+  ok(REPORT.editionLicenseeLine('', '', 'de') === '', 'Lizenz2: kein Label + kein Name -> leer');
+  // Whitespace im Namen wird auch hier kollabiert (nutzt licenseeName/licenseePhrase)
+  ok(REPORT.editionLicenseeLine('Vollversion', '  Max   Mustermann ', 'de') === 'Vollversion · lizenziert für Max Mustermann', 'Lizenz2: Name-Whitespace kollabiert');
+})();
+
 /* === Report ============================================================== */
 console.log('\n  A_S  berechnet  vs.  tabelliert (ISO 898-1)');
 console.log('  ---------------------------------------------');

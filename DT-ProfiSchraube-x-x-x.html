@@ -9,17 +9,18 @@
 <!-- ===================================================================== -->
 <!--  EDITION beim Build setzen:  'full' = Vollversion  ·  'test' = Testversion  -->
 <!--  (nur 'test' erzeugt das Wasserzeichen im Schaubild-PNG; alles andere = voll)  -->
-<script>window.DT_EDITION = 'fullt';</script>
+<script>window.DT_EDITION = 'full';</script>
 <!-- ===================================================================== -->
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div id="editionBar" class="edition-bar full">Vollversion</div>
+<div id="editionBar" class="edition-bar" hidden></div>
 <header class="app-header">
   <div class="brand">
     <span class="mark">DT-ProfiSchraube</span>
     <span class="tag" data-i18n="tagline">Schraubenverbindung nach VDI 2230 Blatt 1</span>
+    <span class="license-line" id="licenseLine"></span>
   </div>
   <div class="header-spacer"></div>
   <div class="header-controls">
@@ -112,6 +113,30 @@
       <button type="button" class="icon-btn close" id="modalClose" aria-label="Schließen">✕</button>
     </div>
     <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- Aktivierung / Registrierung (nur Vollversion; Steuerung in ui.js) -->
+<div class="modal-overlay" id="activation" role="dialog" aria-modal="true" aria-labelledby="licTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="licTitle" data-i18n="actTitle">Aktivierung</h3>
+    </div>
+    <div class="modal-body">
+      <p data-i18n="actPrompt">Bitte Namen und Lizenzschlüssel zur Aktivierung eingeben.</p>
+      <label class="act-field">
+        <span data-i18n="actName">Name</span>
+        <input type="text" id="licName" maxlength="80" autocomplete="name" data-i18n-ph="actNamePh" placeholder="Dein Name">
+      </label>
+      <label class="act-field">
+        <span data-i18n="actKey">Lizenzschlüssel</span>
+        <input type="text" id="licKey" maxlength="120" data-i18n-ph="actKeyPh" placeholder="Lizenzschlüssel von Digistore24">
+      </label>
+      <div class="act-actions">
+        <button type="button" class="btn btn-primary" id="licActivate" data-i18n="actActivate">Aktivieren</button>
+        <button type="button" class="btn btn-ghost" id="licLater" data-i18n="actLater">Später</button>
+      </div>
+    </div>
   </div>
 </div>
 
