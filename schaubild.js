@@ -200,15 +200,14 @@
   /* --------------------------------------------------------- Sprachtexte -- */
   var TXT = {
     title:  { de: 'Schnittdarstellung der Verbindung', en: 'Sectional view of the joint', pt: 'Vista em corte da união' },
-    n_typ:  { de: 'Verbindungstyp', en: 'joint type', pt: 'tipo de união' },
-    v_dsv:  { de: 'DSV (Durchsteck, mit Mutter)', en: 'bolted joint (through, with nut)', pt: 'união passante (com porca)' },
-    v_esv:  { de: 'ESV (Einschraub, Sackloch)', en: 'tapped-thread joint (blind hole)', pt: 'união roscada (furo cego)' },
+    v_dsv:  { de: 'Durchsteckverbindung mit Mutter', en: 'through-bolt with nut', pt: 'união passante (com porca)' },
+    v_esv:  { de: 'Einschraubverbindung (Sackloch)', en: 'tapped-thread joint (blind hole)', pt: 'união roscada (furo cego)' },
     n_d:    { de: 'Gewinde-Nenndurchmesser', en: 'nominal thread diameter', pt: 'diâmetro nominal da rosca' },
     n_lK:   { de: 'Klemmlänge', en: 'clamp length', pt: 'comprimento de aperto' },
     n_dh:   { de: 'Durchgangsloch', en: 'clearance hole', pt: 'furo de passagem' },
     n_dw:   { de: 'Kopfauflage-Durchmesser', en: 'head bearing diameter', pt: 'diâmetro de apoio da cabeça' },
     n_DA:   { de: 'Außen-Ø der verspannten Teile', en: 'outer Ø of clamped parts', pt: 'Ø externo das peças apertadas' },
-    n_phi:  { de: 'Kegelwinkel (Verformungskegel)', en: 'cone angle (deformation cone)', pt: 'ângulo do cone (cone de deformação)' },
+    n_phi:  { de: 'Kegelwinkel', en: 'cone angle', pt: 'ângulo do cone' },
     hint:   { de: 'Chips antippen: Maß in der Zeichnung zeigen/verbergen.',
               en: 'Tap a chip to show/hide the dimension in the drawing.',
               pt: 'Toque num chip para mostrar/ocultar a cota no desenho.' }
@@ -629,11 +628,11 @@
       return '<div class="sb-val-item"' + act + '><span class="sb-chip ' + chip + '"></span>' +
         '<span class="sb-vsym">' + esc(symTxt) + '</span>' +
         '<span class="sb-vname">' + esc(T(TXT[nameKey])) + '</span>' +
-        '<span class="sb-vnum">' + esc(valTxt) + '</span></div>';
+        '<span class="sb-vnum" style="white-space:normal;text-align:right">' + esc(valTxt) + '</span></div>';
     }
     var mm = '\u00A0mm';
     var rows = [];
-    rows.push(item('sb-c-mix', joint, 'n_typ', T(joint === 'DSV' ? TXT.v_dsv : TXT.v_esv), null));
+    rows.push(item('sb-c-mix', joint, (joint === 'DSV') ? 'v_dsv' : 'v_esv', '', null));
     rows.push(item('sb-c-accent', 'd', 'n_d', nf(d, 1) + mm, 'd'));
     rows.push(item('sb-c-accent', 'd_w', 'n_dw', nf(dw, 1) + mm, 'dw'));
     rows.push(item('sb-c-brass', 'd_h', 'n_dh', nf(dh, 1) + mm, 'dh'));

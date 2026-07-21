@@ -1682,6 +1682,17 @@ ok(DATA.PRESETS.grauguss_esv_m12.input.p_G === DATA.TAU_RATIO.gjl.pG, 'Demo-Pres
   ok(SCH.schnittBuild(g0, { lang: 'de' }).indexOf('Klemml') >= 0, 'SX i18n de');
   ok(SCH.schnittBuild(g0, { lang: 'en' }).indexOf('clamp length') >= 0, 'SX i18n en');
   ok(SCH.schnittBuild(g0, { lang: 'pt' }).indexOf('comprimento') >= 0, 'SX i18n pt');
+  /* Regression Legende (Handy-Screenshot 2026-07-21): lange Texte duerfen die
+   * nowrap-Wertspalte nicht ueberlaufen -> jeder sb-vnum traegt den Override,
+   * und der Typ-Langtext steht in der Namensspalte (Wertspalte leer). */
+  (function () {
+    var hh = SCH.schnittBuild(g0, { lang: 'pt' });
+    var all = (hh.match(/class="sb-vnum"/g) || []).length;
+    var soft = (hh.match(/class="sb-vnum" style="white-space:normal/g) || []).length;
+    ok(all > 0 && all === soft, 'SX Legende: alle Wertspalten mit Umbruch-Override (' + soft + '/' + all + ')');
+    ok(hh.indexOf('união passante') >= 0, 'SX Legende: Typ-Langtext in der Namensspalte (pt)');
+    ok(hh.indexOf('cone de deforma') < 0 && hh.indexOf('ângulo do cone') >= 0, 'SX Legende: phi-Name gekuerzt (pt)');
+  })();
 })();
 
 /* === Report ============================================================== */
