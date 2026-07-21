@@ -1637,6 +1637,7 @@ ok(DATA.PRESETS.grauguss_esv_m12.input.p_G === DATA.TAU_RATIO.gjl.pG, 'Demo-Pres
       ok(h.indexOf((p.input.connection === 'ESV') ? 'ESV' : 'DSV') >= 0, tag + ': Typ in Legende');
       var svgPart = h.substring(h.indexOf('<svg'), h.indexOf('</svg>'));
       ok(svgPart.indexOf('\u00A0mm') < 0, tag + ': keine Zahlenwerte (mm) im SVG (Merksatz)');
+      ok(h.indexOf('data-sx-zoom=') >= 0, tag + ': Massstab-Regler vorhanden');
     });
   });
   ok(SCH.buildSchnitt(null, {}, {}) === '', 'Schnitt: R=null -> leer');
@@ -1692,6 +1693,21 @@ ok(DATA.PRESETS.grauguss_esv_m12.input.p_G === DATA.TAU_RATIO.gjl.pG, 'Demo-Pres
     ok(all > 0 && all === soft, 'SX Legende: alle Wertspalten mit Umbruch-Override (' + soft + '/' + all + ')');
     ok(hh.indexOf('união passante') >= 0, 'SX Legende: Typ-Langtext in der Namensspalte (pt)');
     ok(hh.indexOf('cone de deforma') < 0 && hh.indexOf('ângulo do cone') >= 0, 'SX Legende: phi-Name gekuerzt (pt)');
+  })();
+  /* Massstab (Feedback 2026-07-21): Bildschirm-Start 50 % mit Regler,
+   * Druck/PDF fix 33 %, Regler+Hinweis im Druck aus, Block bleibt zusammen. */
+  (function () {
+    var p0 = S.listPresets()[0];
+    var hb = SCH.buildSchnitt(S.computeJoint(p0.input), p0.input, { lang: 'de' });
+    ok(hb.indexOf('data-sx-zoom="1"') >= 0 && hb.indexOf('value="50"') >= 0, 'Schnitt: Regler mit Standard 50 %');
+    ok(hb.indexOf('max-width:50%') >= 0, 'Schnitt: SVG-Wrapper startet bei 50 %');
+    ok(hb.indexOf('@media print') >= 0 && hb.indexOf('max-width:33% !important') >= 0, 'Schnitt: Druck fix 33 %');
+    ok(hb.indexOf('[data-sx-block]{break-inside:avoid}') >= 0, 'Schnitt: Druckblock bricht nicht auseinander');
+    ok(hb.indexOf('[data-sx-zoomrow],[data-sx-hint]{display:none') >= 0, 'Schnitt: Regler+Hinweis im Druck aus');
+    ok(SCH.schnittBuild(g0, {}).indexOf('max-width:100%') >= 0, 'SX: svgScale Default 100 %');
+    ok(SCH.schnittBuild(g0, { svgScale: 0.5 }).indexOf('max-width:50%') >= 0, 'SX: svgScale 0.5 -> 50 %');
+    ok(SCH.schnittBuild(g0, { svgScale: 0.05 }).indexOf('max-width:20%') >= 0, 'SX: svgScale-Clamp unten 20 %');
+    ok(SCH.schnittBuild(g0, { svgScale: 3 }).indexOf('max-width:100%') >= 0, 'SX: svgScale-Clamp oben 100 %');
   })();
 })();
 

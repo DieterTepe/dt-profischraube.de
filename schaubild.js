@@ -263,6 +263,8 @@
     var showCone  = (opts.showCone  !== false) && tanphi > 0;
     var showSplit = (opts.showSplit !== false);
     var breakLong = (opts.breakLong !== false);
+    /* Darstellungsmassstab des SVG (Anteil der Containerbreite), Clamp 20..100 % */
+    var svgScale = (+opts.svgScale > 0) ? Math.min(1, Math.max(0.2, +opts.svgScale)) : 1;
 
     /* ---- abgeleitete Darstellungsmaße (mm) ---- */
     var k  = C.headK * d;
@@ -643,9 +645,11 @@
       rows.push(item('sb-c-faint', 'φ', 'n_phi', nf(deg, 1) + '° (tan ' + nf(tanphi, 3) + ')', 'phi'));
     }
     var legend = '<div class="sb-vals" data-sx-legend="1">' + rows.join('') + '</div>' +
-      '<div style="margin-top:6px;font-size:12px;color:var(--faint)">' + esc(T(TXT.hint)) + '</div>';
+      '<div data-sx-hint="1" style="margin-top:6px;font-size:12px;color:var(--faint)">' + esc(T(TXT.hint)) + '</div>';
 
-    return '<div data-sx-root="1">' + svg + legend + '</div>';
+    return '<div data-sx-root="1">' +
+      '<div data-sx-svgwrap="1" style="max-width:' + Math.round(svgScale * 100) + '%;margin:0 auto">' + svg + '</div>' +
+      legend + '</div>';
   }
 
   /* ------------------------------------------ Interaktivität (Chips) ------ */
@@ -663,6 +667,16 @@
     act[key] = !act[key];
     setDim(container, key, act[key]);
   }
+  function setZoom(container, pct) {
+    if (!(pct > 0)) return;
+    container.__sxZoom = pct;
+    var w = container.querySelector('[data-sx-svgwrap]');
+    if (w) w.style.maxWidth = pct + '%';
+    var r = container.querySelector('[data-sx-zoom]');
+    if (r && +r.value !== pct) r.value = pct;
+    var v = container.querySelectorAll('[data-sx-zoomval]');
+    for (var i = 0; i < v.length; i++) v[i].textContent = pct + ' %';
+  }
   function bind(container) {
     if (!container || container.__sxBound) return;
     container.__sxBound = true;
@@ -675,9 +689,15 @@
       var c = ev.target && ev.target.closest ? ev.target.closest('[data-sx-chip]') : null;
       if (c && container.contains(c)) { ev.preventDefault(); toggle(container, c.getAttribute('data-sx-chip')); }
     });
+    container.addEventListener('input', function (ev) {
+      var z = ev.target && ev.target.closest ? ev.target.closest('[data-sx-zoom]') : null;
+      if (z && container.contains(z)) setZoom(container, +z.value);
+    });
   }
   function refresh(container) {
-    if (!container || !container.__sxActive) return;
+    if (!container) return;
+    if (container.__sxZoom > 0) setZoom(container, container.__sxZoom);
+    if (!container.__sxActive) return;
     var act = container.__sxActive;
     for (var k in act) if (act[k]) setDim(container, k, true);
   }
@@ -687,12 +707,19 @@
 
   /* Zwischentitel (die Viz-Karte heisst "Verspannungsschaubild & Querschnitt") */
   var SX_TITLE = { de: 'Schnittdarstellung der Verbindung', en: 'Sectional view of the joint', pt: 'Vista em corte da uni\u00e3o' };
+  var SX_SCALE = { de: 'Ma\u00dfstab', en: 'Scale', pt: 'Escala' };
+  var SX_DEFAULT_SCALE = 50;   /* Bildschirm-Standard in % (bei jedem Laden) */
+  var SX_PRINT_SCALE = 33;     /* Druck / PDF: hoechstens ein Drittel, fix   */
 
   /* buildSchnitt(R, inp, opts) -> HTML-String (oder '')
    * Mapping Engine/Eingaben -> reine Darstellungsgroessen. Optionen der
    * Laborphase sind fest wie abgenommen: Kegel an, Trennfuge bei l_K/2 an,
    * Bruchlinie automatisch ab l_K/d > 6. tanphi kommt aus R (Engine);
-   * fehlt es (deltaP-Override), entfaellt nur der Kegel. */
+   * fehlt es (deltaP-Override), entfaellt nur der Kegel.
+   * Darstellungsmassstab (Feedback 2026-07-21): Start 50 % der Kartenbreite,
+   * dezenter Regler 25..100 % rechts im Zwischentitel (nicht persistiert);
+   * im Druck fix 33 %, Regler und Chip-Hinweis ausgeblendet, der gesamte
+   * Block (Titel + Zeichnung + Legende) bricht nicht auseinander. */
   function buildSchnitt(R, inp, opts) {
     opts = opts || {}; inp = inp || {};
     if (!R || R.status !== 'ok') return '';
@@ -703,13 +730,29 @@
       joint: (inp.connection === 'ESV') ? 'ESV' : 'DSV',
       tanphi: R.tanPhi
     };
-    var html = SX.build(geo, { lang: opts.lang, fmt: opts.fmt });
+    var html = SX.build(geo, { lang: opts.lang, fmt: opts.fmt, svgScale: SX_DEFAULT_SCALE / 100 });
     if (!html) return '';
     var lang = opts.lang || 'de';
-    return '<div style="margin-top:18px">' +
-      '<div style="font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;' +
-      'color:var(--muted);margin-bottom:6px">' + esc(SX_TITLE[lang] || SX_TITLE.de) + '</div>' +
-      html + '</div>';
+    var scaleTxt = SX_SCALE[lang] || SX_SCALE.de;
+    var head =
+      '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">' +
+        '<div style="font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;' +
+          'color:var(--muted);margin-right:auto">' + esc(SX_TITLE[lang] || SX_TITLE.de) + '</div>' +
+        '<label data-sx-zoomrow="1" style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--faint)">' +
+          esc(scaleTxt) +
+          '<input type="range" data-sx-zoom="1" min="25" max="100" step="5" value="' + SX_DEFAULT_SCALE + '"' +
+            ' aria-label="' + esc(scaleTxt) + '" style="width:110px;accent-color:var(--accent)">' +
+          '<span data-sx-zoomval="1" style="font-family:var(--font-num);font-variant-numeric:tabular-nums;' +
+            'min-width:38px;text-align:right">' + SX_DEFAULT_SCALE + '\u00A0%</span>' +
+        '</label>' +
+      '</div>';
+    var printCss =
+      '<style>@media print{' +
+        '[data-sx-block]{break-inside:avoid}' +
+        '[data-sx-svgwrap]{max-width:' + SX_PRINT_SCALE + '% !important}' +
+        '[data-sx-zoomrow],[data-sx-hint]{display:none !important}' +
+      '}</style>';
+    return '<div data-sx-block="1" style="margin-top:18px">' + printCss + head + html + '</div>';
   }
 
   return {
