@@ -1025,8 +1025,11 @@
   }
   function renderViz(R) {
     var host = $('vizHost'); if (!host) return;
-    var svg = SCHAUBILD ? SCHAUBILD.build(R, lastInputs || collectInputs(), { lang: lang, fmt: fmt }) : '';
-    host.innerHTML = svg || vizPlaceholder();
+    var inputs = lastInputs || collectInputs();
+    var svg = SCHAUBILD ? SCHAUBILD.build(R, inputs, { lang: lang, fmt: fmt }) : '';
+    var cut = (SCHAUBILD && SCHAUBILD.buildSchnitt) ? SCHAUBILD.buildSchnitt(R, inputs, { lang: lang, fmt: fmt }) : '';
+    host.innerHTML = (svg || cut) ? (svg + cut) : vizPlaceholder();
+    if (cut) { SCHAUBILD.bindSchnitt(host); SCHAUBILD.refreshSchnitt(host); }
   }
   function resetViz() {
     var host = $('vizHost'); if (host) host.innerHTML = vizPlaceholder();
