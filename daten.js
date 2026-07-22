@@ -274,7 +274,7 @@
         tightening: 'drehmomentgesteuert', connection: 'DSV', n: 0.5,
         lShank: 18, lThreadFree: 12,
         l_K: 30, d_w: 18, d_h: 13.5, D_A: 45, E_P: 210000, p_G: 600,
-        F_Kerf: 15000, F_A: 1000, F_Qmax: 2500, muT: 0.20, qF: 1,
+        F_Kerf: 16000, F_A: 1000, F_Qmax: 2500, muT: 0.20, qF: 1,
         rz: 'Rz10-40', seats: 2, interfaces: 1
       }
     },
@@ -299,7 +299,7 @@
         tightening: 'drehmomentgesteuert', connection: 'DSV', n: 0.5,
         lShank: 28, lThreadFree: 12,
         l_K: 40, d_w: 24, d_h: 17.5, D_A: 60, E_P: 210000, p_G: 700,
-        F_Kerf: 24000, F_A: 12000, F_Qmax: 4000, muT: 0.20, qF: 1,
+        F_Kerf: 26000, F_A: 12000, F_Qmax: 4000, muT: 0.20, qF: 1,
         rz: 'Rz10-40', seats: 2, interfaces: 1
       }
     },
@@ -336,7 +336,7 @@
         tightening: 'drehmomentgesteuert', connection: 'DSV', n: 0.5,
         lShank: 28, lThreadFree: 12,
         l_K: 40, d_w: 24, d_h: 17.5, D_A: 60, E_P: 210000, p_G: 700,
-        F_Kerf: 20000, F_A: 8000, F_Qmax: 4000, muT: 0.20, qF: 1,
+        F_Kerf: 38000, F_A: 8000, F_Qmax: 4000, muT: 0.20, qF: 1,
         M_Ymax: 50000, qM: 1, ra: 30,
         rz: 'Rz10-40', seats: 2, interfaces: 1
       }
@@ -350,7 +350,7 @@
         tightening: 'drehmomentgesteuert', connection: 'DSV', n: 0.5,
         lShank: 28, lThreadFree: 12,
         l_K: 40, d_w: 24, d_h: 17.5, D_A: 60, E_P: 210000, p_G: 700,
-        F_Kerf: 20000, F_A: 8000, muT: 0.20, qF: 1,
+        F_Kerf: 42000, F_A: 8000, muT: 0.20, qF: 1,
         flangeAssist: true, M_T: 6000000, z_bolts: 8, r_LK: 120,
         rz: 'Rz10-40', seats: 2, interfaces: 1
       }
@@ -363,7 +363,7 @@
         size: 'M12', strengthClass: '8.8', frictionClass: 'B',
         tightening: 'drehmomentgesteuert', connection: 'DSV', n: 0.5,
         lShank: 20, lThreadFree: 10,
-        l_K: 30, d_w: 20, d_h: 13.5, D_A: 55,
+        l_K: 30, d_w: 24, d_h: 13.5, D_A: 55,
         plateMat: 'alu_knet', E_P: 70000, p_G: 230,
         F_Kerf: 8000, F_A: 5000, rz: 'Rz10-40', seats: 2, interfaces: 1,
         thermalAssist: true, dT: -40, alpha_S: 11.5, alpha_P: 23.0

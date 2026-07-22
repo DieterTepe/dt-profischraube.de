@@ -281,7 +281,7 @@
       var ch = s[i], c = s.charCodeAt(i);
       if (ch === '\\' || ch === '{' || ch === '}') out += '\\' + ch;
       else if (ch === '\n') out += '\\par ';
-      else if (c > 127) out += '\\u' + c + '?';
+      else if (c > 127) { if (c > 32767) c -= 65536; out += '\\u' + c + '?'; } // RTF: \uN ist signed 16-bit
       else out += ch;
     }
     return out;
@@ -361,5 +361,5 @@
     return out;
   }
 
-  return { VERSION: VERSION, buildModel: buildModel, buildRTF: buildRTF, buildCSV: buildCSV, watermarkText: watermarkText, shouldWatermark: shouldWatermark, isFeatureAllowed: isFeatureAllowed, GATED_FEATURES: GATED_FEATURES, licenseeName: licenseeName, licenseePhrase: licenseePhrase, licenseeField: licenseeField, editionLicenseeLine: editionLicenseeLine };
+  return { VERSION: VERSION, buildModel: buildModel, buildRTF: buildRTF, buildCSV: buildCSV, watermarkText: watermarkText, shouldWatermark: shouldWatermark, isFeatureAllowed: isFeatureAllowed, GATED_FEATURES: GATED_FEATURES, licenseeName: licenseeName, licenseePhrase: licenseePhrase, licenseeField: licenseeField, editionLicenseeLine: editionLicenseeLine, rtfEsc: rtfEsc };
 });

@@ -66,9 +66,15 @@
     var add = String(label || '').trim().replace(/[^\wäöüÄÖÜß.-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 40);
     return 'Berechnung_' + iso + (add ? '_' + add : '') + '.dt';
   }
+  /* localStorage kann gesperrt sein (Privatmodus/strenge Browser) oder fehlen (Node) —
+   * nie ungeschuetzt zugreifen, sonst bricht das ganze Modul beim Laden. Alle
+   * Sprach-/Theme-Zugriffe laufen ueber diese Helfer (Lizenz-Funktionen haben ihr
+   * eigenes try/catch bereits). Ohne Speicher gilt der Fallback nur fuer die Sitzung. */
+  function lsGet(k, fallback) { try { return localStorage.getItem(k) || fallback; } catch (e) { return fallback; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* still ignorieren */ } }
   /* Node (Testharness): nur die reinen Helfer exportieren, kein DOM-Code. */
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { dtSerialize: dtSerialize, dtParse: dtParse, dtFileName: dtFileName, DT_APP: DT_APP, overallVerdict: overallVerdict };
+    module.exports = { dtSerialize: dtSerialize, dtParse: dtParse, dtFileName: dtFileName, DT_APP: DT_APP, overallVerdict: overallVerdict, lsGet: lsGet, lsSet: lsSet };
   }
   if (typeof window === 'undefined') return;
 
@@ -172,7 +178,7 @@
     }
   };
   var GROUP_ORDER = ['Schraube', 'Anziehen', 'Geometrie', 'Belastung', 'Setzen', 'Nachweise'];
-  var lang = localStorage.getItem('dts-lang') || 'de';
+  var lang = lsGet('dts-lang', 'de');
   function t(k) { return (STR[lang] && STR[lang][k]) || STR.de[k] || k; }
   function locale() { return lang === 'en' ? 'en-US' : (lang === 'pt' ? 'pt-PT' : 'de-DE'); }
 
@@ -209,7 +215,7 @@
       if (!keysInGroup.length) return;
       var det = el('details', 'form-group'); if (gi < 3 || grp === 'Nachweise') det.open = true;
       var sum = el('summary');
-      sum.appendChild(el('span', 'grp-num', 'R' + gi));
+      sum.appendChild(el('span', 'grp-num', String(gi + 1))); /* neutrale Gruppen-Nr.: 'R' gehoert den VDI-Schritten */
       var title = el('span', null); title.setAttribute('data-i18n', 'grp_' + grp); title.textContent = t('grp_' + grp);
       sum.appendChild(title);
       sum.appendChild(el('span', 'chev', '›'));
@@ -808,6 +814,7 @@
   function verdictBanner(v, meta) {
     var sym = v.level === 'ok' ? '🟢' : (v.level === 'warn' ? '🟡' : '🔴');
     var b = el('div', 'verdict-banner ' + v.level);
+    b.setAttribute('role', 'status'); b.setAttribute('aria-live', 'polite'); /* Screenreader liest neues Urteil vor */
     b.appendChild(el('span', 'vb-dot', sym));
     var body = el('div', 'vb-body');
     body.appendChild(el('span', 'vb-text', verdictMainText(v)));
@@ -1275,14 +1282,14 @@
     if (lastResult) renderResults(lastResult); else { var h = $('resultHost'); if (h.querySelector('.status-banner.idle')) { h.innerHTML = ''; h.appendChild(banner('idle', t('resultIdle'))); } resetViz(); }
     if (hadForm) liveValidate();
   }
-  function setLang(l) { lang = l; localStorage.setItem('dts-lang', l); applyLang(); }
+  function setLang(l) { lang = l; lsSet('dts-lang', l); applyLang(); }
 
-  function applyTheme(theme) { document.documentElement.setAttribute('data-theme', theme); localStorage.setItem('dts-theme', theme); }
+  function applyTheme(theme) { document.documentElement.setAttribute('data-theme', theme); lsSet('dts-theme', theme); }
 
   /* --------------------------------------------------------------- Init/Wire */
   function on(id, ev, fn) { var e = $(id); if (e) e.addEventListener(ev, fn); }
   function init() {
-    var theme = localStorage.getItem('dts-theme') || 'dark';
+    var theme = lsGet('dts-theme', 'dark');
     applyTheme(theme);
 
     buildSteps();

@@ -1711,6 +1711,44 @@ ok(DATA.PRESETS.grauguss_esv_m12.input.p_G === DATA.TAU_RATIO.gjl.pG, 'Demo-Pres
   })();
 })();
 
+/* === 27 · Review-Haertungen 2026-07-22 (P3/P6) & Beispiel-Ampel =========== */
+(function () {
+  /* (a) P3 — localStorage-Helfer: duerfen ohne Speicher (Node = wie gesperrter
+   *     Privatmodus) niemals werfen, sondern liefern den Fallback. */
+  var UIH = require('./ui.js');
+  ok(typeof UIH.lsGet === 'function' && typeof UIH.lsSet === 'function', 'P3: lsGet/lsSet exportiert');
+  var g; try { g = UIH.lsGet('dts-nope', 'FB'); } catch (e) { g = 'THREW'; }
+  ok(g === 'FB', 'P3: lsGet liefert Fallback statt Absturz');
+  var threw = false; try { UIH.lsSet('dts-nope', 'x'); } catch (e) { threw = true; }
+  ok(!threw, 'P3: lsSet wirft nie');
+
+  /* (b) P6 — RTF \\uN ist eine vorzeichenbehaftete 16-Bit-Zahl: Zeichen ueber
+   *     32767 muessen negativ geschrieben werden; Bestandszeichen unveraendert. */
+  var REP = require('./report.js');
+  ok(typeof REP.rtfEsc === 'function', 'P6: rtfEsc exportiert');
+  ok(REP.rtfEsc('Φ') === '\\u934?', 'P6: BMP-Zeichen unveraendert (Phi)');
+  ok(REP.rtfEsc('µ') === '\\u181?', 'P6: BMP-Zeichen unveraendert (mu)');
+  ok(REP.rtfEsc('\uE000') === '\\u-8192?', 'P6: >32767 signed (U+E000 -> -8192)');
+  ok(REP.rtfEsc('\uD835\uDF0E').charAt(2) === '-', 'P6: Surrogate signed');
+
+  /* (c) Beispiel-Ampel — die 15 Presets sind Aushaengeschilder: status ok,
+   *     Ampel NIE rot, jede gefuehrte Sicherheit >= 1,2 (kein "knapp"-Item),
+   *     mindestens ein Nachweis gefuehrt, montierbar (F_Mmax <= F_Mzul). */
+  S.listPresets().forEach(function (p) {
+    var R = S.computeJoint(p.input);
+    ok(R.status === 'ok', 'Beispiel ' + p.id + ': status ok');
+    if (R.status !== 'ok') return;
+    var s = [R.S_F, R.fatigue && R.fatigue.S_D, R.pressure && R.pressure.S_P, R.slip && R.slip.S_G, R.r11 && R.r11.S_A];
+    var v = UIH.overallVerdict(s);
+    ok(v.level !== 'bad', 'Beispiel ' + p.id + ': Ampel nie rot');
+    ok(v.hasAny === true, 'Beispiel ' + p.id + ': mindestens ein Nachweis gefuehrt');
+    for (var i = 0; i < v.items.length; i++) {
+      ok(v.items[i] !== 'bad' && v.items[i] !== 'warn', 'Beispiel ' + p.id + ': Sicherheit #' + i + ' ok oder n.b.');
+    }
+    ok(R.F_Mmax == null || R.F_Mzul == null || R.F_Mmax <= R.F_Mzul, 'Beispiel ' + p.id + ': montierbar (F_Mmax <= F_Mzul)');
+  });
+})();
+
 /* === Report ============================================================== */
 console.log('\n  A_S  berechnet  vs.  tabelliert (ISO 898-1)');
 console.log('  ---------------------------------------------');
