@@ -116,10 +116,11 @@
     pt: 'DT-ProfiSchraube – Versão de teste – não usar em produção'
   };
   function watermarkText(lang) { return pick(WATERMARK, lang); }
-  // Wasserzeichen NUR in der Testversion. Fehlt/anders die Kennung → keine Marke
-  // (sichere Voreinstellung: eine versehentlich unmarkierte Vollversion ist harmlos,
-  //  eine versehentlich markierte Vollversion wäre peinlich).
-  function shouldWatermark(edition) { return edition === 'test'; }
+  // Wasserzeichen bei ALLEM außer der echten Vollversion. FAIL-SAFE und
+  // deckungsgleich mit isFeatureAllowed: nur exakt 'full' bleibt unmarkiert,
+  // jede andere Kennung (fehlend/'test'/unbekannt) wird markiert. So trägt eine
+  // versehentlich nicht als 'full' gebaute Version sichtbar die Testmarke.
+  function shouldWatermark(edition) { return edition !== 'full'; }
 
   /* ---- Funktions-Gating Test/Voll (reine Logik; UI zeigt sonst ein Overlay) ---
    * Testversion: nur der PNG-Export ist erlaubt (mit Wasserzeichen — Vorgeschmack).
@@ -128,7 +129,9 @@
    * (sichere Voreinstellung, deckungsgleich mit shouldWatermark). */
   var GATED_FEATURES = ['save', 'load', 'print', 'rtf', 'csv', 'png'];
   function isFeatureAllowed(feature, edition) {
-    if (edition === 'test') return feature === 'png';
+    // FAIL-SAFE: nur exakt 'full' gibt alle Funktionen frei. Jede andere Kennung
+    // (fehlend/'test'/unbekannt) wird wie Test behandelt — nur PNG (mit Wasserzeichen).
+    if (edition !== 'full') return feature === 'png';
     return true;
   }
 

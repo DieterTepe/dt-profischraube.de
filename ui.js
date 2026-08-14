@@ -83,8 +83,15 @@
   var SCHAUBILD = window.DTSSchaubild || null;
   var REPORT = window.DTSReport || null;
   // Feste Editions-Kennung dieser Datei (im <head> gesetzt). Nur exakt 'test' zählt
-  // als Testversion; alles andere (fehlend/'full'/unbekannt) gilt sicher als Vollversion.
-  var EDITION = (window.DT_EDITION === 'test') ? 'test' : 'full';
+  // Editions-Kennung FAIL-SAFE: NUR exakt 'full' schaltet die Vollversion frei.
+  // Alles andere — fehlend, leer, 'test', Tippfehler, beliebiger String — gilt
+  // sicher als Testversion. So kann niemand durch irgendeinen Eintrag die
+  // Vollversion erschleichen; nur der bewusste Build mit 'full' ist voll.
+  var EDITION = (window.DT_EDITION === 'full') ? 'full' : 'test';
+  // Normalisierte Kennung, an die sich ALLE editionsabhängigen Prüfungen hängen
+  // (UI-Gating, Wasserzeichen, Aktivierung) — damit es keinen Pfad gibt, der die
+  // Roh-Kennung anders interpretiert als diese eine Fail-safe-Regel.
+  window.DT_EDITION_EFF = EDITION;
   if (!DATA || !VALID || !SOLVER) {
     document.getElementById('resultHost').innerHTML =
       '<div class="status-banner bad">Module nicht geladen (daten.js / validate.js / solver.js).</div>';
@@ -1165,7 +1172,7 @@
         ctx.fillStyle = cssVar('--card', cssVar('--bg', '#ffffff'));
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        if (REPORT && REPORT.shouldWatermark(window.DT_EDITION)) {
+        if (REPORT && REPORT.shouldWatermark(EDITION)) {
           drawWatermark(ctx, canvas.width, canvas.height, REPORT.watermarkText(lang));
         }
         canvas.toBlob(function (blob) {

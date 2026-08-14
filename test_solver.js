@@ -1475,13 +1475,14 @@ ok(DATA.PRESETS.grauguss_esv_m12.input.p_G === DATA.TAU_RATIO.gjl.pG, 'Demo-Pres
   ok(typeof REPORT.shouldWatermark === 'function' && typeof REPORT.watermarkText === 'function',
     'PNG: report.js exportiert shouldWatermark/watermarkText');
 
-  // Nur die Testversion trägt das Wasserzeichen; alles andere (voll, fehlend, unbekannt) nicht
+  // FAIL-SAFE (v4.9.8): NUR exakt 'full' bleibt unmarkiert; alles andere trägt das Wasserzeichen
   ok(REPORT.shouldWatermark('test') === true, 'PNG: edition=test -> Wasserzeichen');
   ok(REPORT.shouldWatermark('full') === false, 'PNG: edition=full -> kein Wasserzeichen');
-  ok(REPORT.shouldWatermark(undefined) === false, 'PNG: fehlende Kennung -> kein Wasserzeichen (sichere Voreinstellung)');
-  ok(REPORT.shouldWatermark(null) === false, 'PNG: null-Kennung -> kein Wasserzeichen');
-  ok(REPORT.shouldWatermark('Test') === false, 'PNG: Groß-/Kleinschreibung streng (nur exakt "test")');
-  ok(REPORT.shouldWatermark('') === false, 'PNG: leere Kennung -> kein Wasserzeichen');
+  ok(REPORT.shouldWatermark(undefined) === true, 'PNG: fehlende Kennung -> Wasserzeichen (fail-safe)');
+  ok(REPORT.shouldWatermark(null) === true, 'PNG: null-Kennung -> Wasserzeichen (fail-safe)');
+  ok(REPORT.shouldWatermark('Full') === true, 'PNG: Groß-/Kleinschreibung streng (nur exakt "full" ist voll)');
+  ok(REPORT.shouldWatermark('voll') === true, 'PNG: Tippfehler-Kennung -> Wasserzeichen (fail-safe)');
+  ok(REPORT.shouldWatermark('') === true, 'PNG: leere Kennung -> Wasserzeichen (fail-safe)');
 
   // Wasserzeichen-Text dreisprachig, enthält den festgelegten Kern
   ok(/Testversion/.test(REPORT.watermarkText('de')) && /Produktivnutzung/.test(REPORT.watermarkText('de')), 'PNG: DE-Wasserzeichentext korrekt');
@@ -1507,17 +1508,19 @@ ok(DATA.PRESETS.grauguss_esv_m12.input.p_G === DATA.TAU_RATIO.gjl.pG, 'Demo-Pres
   ['save', 'load', 'print', 'rtf', 'csv'].forEach(function (f) {
     ok(REPORT.isFeatureAllowed(f, 'test') === false, 'Gating: Testversion sperrt ' + f);
   });
-  // Sichere Voreinstellung: fehlende/unbekannte Kennung wirkt wie Vollversion
-  ['full', undefined, null, '', 'Test', 'voll', 'xyz'].forEach(function (ed) {
-    ok(REPORT.isFeatureAllowed('save', ed) === true, 'Gating: Kennung ' + JSON.stringify(ed) + ' -> wie Voll (save erlaubt)');
-    ok(REPORT.isFeatureAllowed('rtf', ed) === true, 'Gating: Kennung ' + JSON.stringify(ed) + ' -> wie Voll (rtf erlaubt)');
+  // FAIL-SAFE (v4.9.8): NUR exakt 'full' schaltet frei — jede andere Kennung
+  // (fehlend/unbekannt/Tippfehler) wirkt wie Testversion (nur PNG, sonst gesperrt).
+  ['test', undefined, null, '', 'Full', 'voll', 'xyz'].forEach(function (ed) {
+    ok(REPORT.isFeatureAllowed('save', ed) === false, 'Gating: Kennung ' + JSON.stringify(ed) + ' -> wie Test (save gesperrt)');
+    ok(REPORT.isFeatureAllowed('rtf', ed) === false, 'Gating: Kennung ' + JSON.stringify(ed) + ' -> wie Test (rtf gesperrt)');
+    ok(REPORT.isFeatureAllowed('png', ed) === true, 'Gating: Kennung ' + JSON.stringify(ed) + ' -> PNG bleibt erlaubt');
   });
-  // nur exakt 'test' (streng) sperrt
-  ok(REPORT.isFeatureAllowed('csv', 'test') === false && REPORT.isFeatureAllowed('csv', 'Test') === true,
-    'Gating: nur exakt "test" sperrt (Groß-/Kleinschreibung streng)');
-  // Konsistenz mit dem Wasserzeichen: genau die Editionen, die das Wasserzeichen
-  // tragen, sind auch die mit gesperrten Exporten
-  ['test', 'full', undefined, 'xyz'].forEach(function (ed) {
+  // nur exakt 'full' (streng) gibt Exporte frei
+  ok(REPORT.isFeatureAllowed('csv', 'full') === true && REPORT.isFeatureAllowed('csv', 'Full') === false,
+    'Gating: nur exakt "full" gibt frei (Groß-/Kleinschreibung streng)');
+  // Konsistenz mit dem Wasserzeichen: genau die Editionen mit gesperrten Exporten
+  // tragen auch das Wasserzeichen (nur die echte Vollversion nicht)
+  ['test', 'full', undefined, 'xyz', '', 'voll'].forEach(function (ed) {
     var locked = !REPORT.isFeatureAllowed('rtf', ed);
     ok(locked === REPORT.shouldWatermark(ed), 'Gating: Sperre und Wasserzeichen konsistent für ' + JSON.stringify(ed));
   });
@@ -1747,6 +1750,28 @@ ok(DATA.PRESETS.grauguss_esv_m12.input.p_G === DATA.TAU_RATIO.gjl.pG, 'Demo-Pres
     }
     ok(R.F_Mmax == null || R.F_Mzul == null || R.F_Mmax <= R.F_Mzul, 'Beispiel ' + p.id + ': montierbar (F_Mmax <= F_Mzul)');
   });
+
+  /* (d) Fail-safe-Edition (v4.9.8): NUR exakt 'full' schaltet die Vollversion
+   *     frei. Jede andere Kennung — fehlend, leer, 'test', Groß-/Kleinschreibung,
+   *     Tippfehler, beliebiger String — muss sicher als Testversion wirken
+   *     (Exporte gesperrt außer PNG, PNG mit Wasserzeichen). Verhindert, dass ein
+   *     beliebiger Eintrag in der HTML die Vollversion erschleicht. */
+  var REP2 = require('./report.js');
+  var NICHT_VOLL = [undefined, null, '', ' ', 'test', 'Test', 'TEST', 'Full', 'FULL', 'voll',
+    'vollversion', 'full ', ' full', 'true', '1', 'xyz', 'admin'];
+  NICHT_VOLL.forEach(function (ed) {
+    ok(REP2.isFeatureAllowed('save', ed) === false, 'Fail-safe: ' + JSON.stringify(ed) + ' sperrt Speichern');
+    ok(REP2.isFeatureAllowed('rtf', ed) === false, 'Fail-safe: ' + JSON.stringify(ed) + ' sperrt Word');
+    ok(REP2.isFeatureAllowed('csv', ed) === false, 'Fail-safe: ' + JSON.stringify(ed) + ' sperrt CSV');
+    ok(REP2.isFeatureAllowed('print', ed) === false, 'Fail-safe: ' + JSON.stringify(ed) + ' sperrt Druck');
+    ok(REP2.isFeatureAllowed('png', ed) === true, 'Fail-safe: ' + JSON.stringify(ed) + ' -> PNG erlaubt (mit Marke)');
+    ok(REP2.shouldWatermark(ed) === true, 'Fail-safe: ' + JSON.stringify(ed) + ' -> Wasserzeichen');
+  });
+  // Gegenprobe: exakt 'full' ist die EINZIGE freischaltende Kennung
+  ['save', 'load', 'print', 'rtf', 'csv', 'png'].forEach(function (f) {
+    ok(REP2.isFeatureAllowed(f, 'full') === true, 'Fail-safe: exakt "full" erlaubt ' + f);
+  });
+  ok(REP2.shouldWatermark('full') === false, 'Fail-safe: exakt "full" ohne Wasserzeichen');
 })();
 
 /* === Report ============================================================== */
