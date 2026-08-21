@@ -1,2 +1,0 @@
-# dt-profischraube.de
-Schraubenberechnung
