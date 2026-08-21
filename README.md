@@ -1,2 +1,1 @@
-# dt-profidreieck-web
-Dreieckberechnung
+# dt-Berechnung
